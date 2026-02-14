@@ -6,11 +6,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white flex items-center justify-center min-h-screen">
+
     <div id="login" class="bg-zinc-900 p-8 rounded-3xl border border-orange-600 text-center w-80">
-        <h1 class="text-3xl font-black text-orange-500 mb-6 italic">BLAZE BANK</h1>
+        <h1 class="text-3xl font-black text-orange-500 mb-6 italic uppercase">Blaze Bank</h1>
         <input id="u" type="text" placeholder="Username" class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded">
         <input id="p" type="password" placeholder="Password" class="w-full p-2 mb-4 bg-black border border-zinc-700 rounded">
-        <button onclick="auth()" class="w-full bg-orange-600 py-2 rounded font-bold">ENTER</button>
+        <button onclick="auth()" class="w-full bg-orange-600 py-2 rounded font-bold hover:bg-orange-500">ENTER</button>
     </div>
 
     <div id="bank" class="hidden w-80 text-center">
@@ -28,50 +29,97 @@
     </div>
 
     <script>
-        const URL = 'https://xctauoqsgsaphnranqix.supabase.co';
-        const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
-        const sb = supabase.createClient(URL, KEY);
-        let user = null;
+        // --- CONFIGURATION ---
+        // MAKE SURE THERE ARE NO SPACES AROUND THE URL OR KEY
+        const MY_URL = 'https://xctauoqsgsaphnranqix.supabase.co'; 
+        const MY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
+
+        // --- SAFETY CHECK ---
+        if (MY_URL.includes("PASTE_URL") || !MY_URL.startsWith("https")) {
+            alert("❌ ERROR: You haven't pasted your Supabase URL correctly! It should start with https://");
+        }
+
+        let sb;
+        try {
+            sb = supabase.createClient(MY_URL, MY_KEY);
+        } catch (e) {
+            alert("❌ CONNECTION ERROR: " + e.message);
+        }
+
+        let currentUser = null;
 
         async function auth() {
-            const u = document.getElementById('u').value, p = document.getElementById('p').value;
-            let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
-            if (acc && acc.password === p) start(acc);
-            else if (!acc) {
-                let { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
-                start(n);
-            } else alert("Wrong Password");
+            const u = document.getElementById('u').value.trim();
+            const p = document.getElementById('p').value;
+
+            if (!u || !p) return alert("Fill in username/password");
+
+            // Look for user
+            try {
+                const { data, error } = await sb.from('profiles').select('*').eq('username', u).single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    alert("Database Error: " + error.message + "\n\nTip: Make sure RLS is DISABLED in Supabase!");
+                    return;
+                }
+
+                if (data) {
+                    if (data.password === p) loginSuccess(data);
+                    else alert("Wrong password!");
+                } else {
+                    // Create user
+                    const { data: newUser, error: createError } = await sb.from('profiles').insert([
+                        { username: u, password: p, balance: 500 }
+                    ]).select().single();
+                    
+                    if (createError) alert("Error creating account: " + createError.message);
+                    else loginSuccess(newUser);
+                }
+            } catch (err) {
+                alert("Critical System Error: " + err.message);
+            }
         }
 
-        function start(acc) {
-            user = acc;
-            document.getElementById('login').classList.add('hidden');
-            document.getElementById('bank').classList.remove('hidden');
-            document.getElementById('name').innerText = user.username;
-            if (user.username === 'vanish_blader 17') document.getElementById('admin').classList.remove('hidden');
-            update();
+        function loginSuccess(acc) {
+            currentUser = acc;
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('bank').style.display = 'block';
+            document.getElementById('name').innerText = currentUser.username;
+            
+            if (currentUser.username === 'vanish_blader 17') {
+                document.getElementById('admin').style.display = 'block';
+            }
+            refreshBalance();
         }
 
-        async function update() {
-            let { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+        async function refreshBalance() {
+            const { data } = await sb.from('profiles').select('balance').eq('username', currentUser.username).single();
             document.getElementById('bal').innerText = data.balance.toLocaleString();
         }
 
         async function mint() {
-            let { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
-            await sb.from('profiles').update({balance: data.balance + 10000}).eq('username', user.username);
-            update();
+            const { data } = await sb.from('profiles').select('balance').eq('username', currentUser.username).single();
+            await sb.from('profiles').update({ balance: data.balance + 10000 }).eq('username', currentUser.username);
+            refreshBalance();
         }
 
         async function send() {
-            const to = document.getElementById('to').value, amt = parseInt(document.getElementById('amt').value);
-            let { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
-            let { data: them } = await sb.from('profiles').select('balance').eq('username', to).single();
-            if (me.balance >= amt && them) {
-                await sb.from('profiles').update({balance: me.balance - amt}).eq('username', user.username);
-                await sb.from('profiles').update({balance: them.balance + amt}).eq('username', to);
-                alert("Sent!"); update();
-            } else alert("Error: User not found or no money!");
+            const target = document.getElementById('to').value.trim();
+            const amount = parseInt(document.getElementById('amt').value);
+
+            if (!target || isNaN(amount)) return alert("Enter target and amount");
+
+            const { data: me } = await sb.from('profiles').select('balance').eq('username', currentUser.username).single();
+            const { data: them } = await sb.from('profiles').select('balance').eq('username', target).single();
+
+            if (!them) return alert("User not found!");
+            if (me.balance < amount) return alert("Not enough Yazos!");
+
+            await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', currentUser.username);
+            await sb.from('profiles').update({ balance: them.balance + amount }).eq('username', target);
+            
+            alert("Transfer Successful!");
+            refreshBalance();
         }
     </script>
 </body>
