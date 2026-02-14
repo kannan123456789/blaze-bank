@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BLAZE BANK</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white flex items-center justify-center min-h-screen">
+    <div id="login" class="bg-zinc-900 p-8 rounded-3xl border border-orange-600 text-center w-80">
+        <h1 class="text-3xl font-black text-orange-500 mb-6 italic">BLAZE BANK</h1>
+        <input id="u" type="text" placeholder="Username" class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded">
+        <input id="p" type="password" placeholder="Password" class="w-full p-2 mb-4 bg-black border border-zinc-700 rounded">
+        <button onclick="auth()" class="w-full bg-orange-600 py-2 rounded font-bold">ENTER</button>
+    </div>
+
+    <div id="bank" class="hidden w-80 text-center">
+        <h2 id="name" class="text-orange-500 italic font-bold mb-4"></h2>
+        <div class="bg-zinc-900 p-6 rounded-3xl border-2 border-orange-500 mb-4">
+            <p class="text-xs text-zinc-400">YAZO BALANCE</p>
+            <h1 id="bal" class="text-5xl font-black">0</h1>
+        </div>
+        <button id="admin" onclick="mint()" class="hidden w-full bg-yellow-500 text-black p-3 rounded-xl mb-4 font-black text-xs">⚡ MINT 10,000 YAZOS ⚡</button>
+        <div class="bg-zinc-900 p-4 rounded-xl">
+            <input id="to" type="text" placeholder="Send to..." class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded text-xs">
+            <input id="amt" type="number" placeholder="Amount" class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded text-xs">
+            <button onclick="send()" class="w-full border border-orange-500 text-orange-500 py-2 rounded text-xs">SEND</button>
+        </div>
+    </div>
+
+    <script>
+        const URL = 'https://xctauoqsgsaphnranqix.supabase.co';
+        const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
+        const sb = supabase.createClient(URL, KEY);
+        let user = null;
+
+        async function auth() {
+            const u = document.getElementById('u').value, p = document.getElementById('p').value;
+            let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
+            if (acc && acc.password === p) start(acc);
+            else if (!acc) {
+                let { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
+                start(n);
+            } else alert("Wrong Password");
+        }
+
+        function start(acc) {
+            user = acc;
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('bank').classList.remove('hidden');
+            document.getElementById('name').innerText = user.username;
+            if (user.username === 'vanish_blader 17') document.getElementById('admin').classList.remove('hidden');
+            update();
+        }
+
+        async function update() {
+            let { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            document.getElementById('bal').innerText = data.balance.toLocaleString();
+        }
+
+        async function mint() {
+            let { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            await sb.from('profiles').update({balance: data.balance + 10000}).eq('username', user.username);
+            update();
+        }
+
+        async function send() {
+            const to = document.getElementById('to').value, amt = parseInt(document.getElementById('amt').value);
+            let { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            let { data: them } = await sb.from('profiles').select('balance').eq('username', to).single();
+            if (me.balance >= amt && them) {
+                await sb.from('profiles').update({balance: me.balance - amt}).eq('username', user.username);
+                await sb.from('profiles').update({balance: them.balance + amt}).eq('username', to);
+                alert("Sent!"); update();
+            } else alert("Error: User not found or no money!");
+        }
+    </script>
+</body>
+</html>
