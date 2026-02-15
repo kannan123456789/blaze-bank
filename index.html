@@ -7,85 +7,89 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; }
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background-color: #ff5f00; }
         .blaze-border { border: 1px solid #ff5f00; box-shadow: 0 0 20px rgba(255, 95, 0, 0.1); }
         input { background: #111 !important; border: 1px solid #333 !important; color: white !important; }
-        .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.05); }
+        .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.05); transition: all 0.3s ease; }
+        .admin-glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div id="login-screen" class="w-full max-w-md p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center">
         <h1 class="text-5xl font-black italic blaze-orange mb-2">BLAZE BANK</h1>
-        <p class="text-zinc-500 text-xs uppercase tracking-widest mb-8">Yazo Currency System</p>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.3em] mb-8">Secure Yazo Terminal</p>
         <input id="u" type="text" placeholder="Username" class="w-full p-4 mb-4 rounded-xl outline-none focus:border-orange-500">
         <input id="p" type="password" placeholder="Password" class="w-full p-4 mb-6 rounded-xl outline-none focus:border-orange-500">
-        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:opacity-90 transition">Enter Vault</button>
+        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition">Enter Vault</button>
     </div>
 
     <div id="dashboard" class="hidden w-full max-w-md">
         <div class="flex justify-between items-center mb-6">
             <h2 id="user-display" class="text-2xl font-bold italic blaze-orange uppercase"></h2>
-            <button onclick="location.reload()" class="text-zinc-500 text-xs hover:text-white">LOGOUT</button>
+            <button onclick="location.reload()" class="text-zinc-500 text-xs hover:text-white uppercase tracking-tighter">Exit System</button>
         </div>
 
         <div class="p-8 rounded-3xl bg-zinc-900 blaze-border text-center mb-6">
-            <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-1">Available Yazos</p>
-            <h1 class="text-6xl font-black italic"><span id="bal">0</span></h1>
+            <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-1">Account Balance</p>
+            <h1 class="text-6xl font-black italic"><span id="bal">0</span> <span class="text-sm blaze-orange">YZ</span></h1>
         </div>
 
-        <button id="admin-btn" onclick="mint()" class="hidden w-full mb-6 bg-yellow-500 text-black font-black py-4 rounded-2xl text-sm italic uppercase shadow-[0_0_15px_rgba(234,179,8,0.3)]">
-            ⚡ MINT 10,000 YAZOS (ADMIN) ⚡
+        <button id="admin-btn" onclick="mint()" class="hidden w-full mb-6 bg-yellow-500 text-black font-black py-4 rounded-2xl text-sm italic uppercase admin-glow">
+            ⚡ MINT 10,000 YAZOS ⚡
         </button>
 
         <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 mb-6">
-            <h3 class="text-[10px] font-bold mb-4 text-orange-500 uppercase tracking-widest">Send Currency</h3>
-            <input id="target" type="text" placeholder="Recipient Username" class="w-full p-3 mb-3 rounded-lg text-sm">
+            <h3 class="text-[10px] font-bold mb-4 text-orange-500 uppercase tracking-widest">Global Transfer</h3>
+            <input id="target" type="text" placeholder="Recipient Name" class="w-full p-3 mb-3 rounded-lg text-sm">
             <input id="amt" type="number" placeholder="Amount" class="w-full p-3 mb-4 rounded-lg text-sm">
-            <button onclick="send()" class="w-full py-3 rounded-lg border border-orange-500 text-orange-500 font-bold hover:bg-orange-500 hover:text-black transition text-sm">EXECUTE TRANSFER</button>
+            <button onclick="send()" class="w-full py-3 rounded-lg border border-orange-500 text-orange-500 font-bold hover:bg-orange-500 hover:text-black transition text-sm">SEND YAZOS</button>
         </div>
 
         <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
-            <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase tracking-widest">Live Activity Feed</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Activity Feed</h3>
+                <button onclick="clearAllLocal()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase">Reset View</button>
+            </div>
             <div id="feed" class="space-y-3 max-h-48 overflow-y-auto pr-2">
-                <p class="text-zinc-600 text-xs italic text-center">Syncing with blockchain...</p>
+                <p class="text-zinc-600 text-xs italic text-center">Awaiting data...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
+        // 1. YOUR CONNECTION DATA
         const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
 
         const sb = supabase.createClient(SB_URL, SB_KEY);
         let user = null;
+        
+        // 2. LOCAL HIDE STORAGE
+        let hiddenLogs = JSON.parse(localStorage.getItem('hiddenLogs')) || [];
 
-        // --- AUTHENTICATION ---
+        // AUTHENTICATION
         async function auth() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value;
-
-            if (!u || !p) return alert("Missing credentials");
+            if (!u || !p) return;
 
             try {
-                let { data: acc, error } = await sb.from('profiles').select('*').eq('username', u).single();
-
+                let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
                 if (acc) {
                     if (acc.password === p) start(acc);
-                    else alert("Access Denied: Invalid Password");
+                    else alert("Access Denied");
                 } else {
-                    if(confirm("Account not found. Create new profile for '" + u + "'?")) {
-                        const { data: n, error: e } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
-                        if (e) alert("Error: " + e.message);
-                        else start(n);
+                    if(confirm("Join Blaze Bank as " + u + "?")) {
+                        const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
+                        start(n);
                     }
                 }
-            } catch (err) {
-                alert("Connection failed. Check your Keys and RLS settings.");
-            }
+            } catch (err) { alert("Check your Connection/RLS settings."); }
         }
 
         function start(acc) {
@@ -95,62 +99,76 @@
             document.getElementById('user-display').innerText = user.username;
             if (user.username === 'vanish_blader 17') document.getElementById('admin-btn').classList.remove('hidden');
             refresh();
-            // Refresh feed every 10 seconds automatically
-            setInterval(refresh, 10000);
+            setInterval(refresh, 5000); // Auto-sync feed every 5s
         }
 
-        // --- CORE FUNCTIONS ---
+        // REFRESH DATA
         async function refresh() {
-            // Update My Balance
+            // Get Balance
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             document.getElementById('bal').innerText = me.balance.toLocaleString();
 
-            // Update Feed
-            const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(5);
+            // Get Feed
+            const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(30);
             const feedDiv = document.getElementById('feed');
             
             if (logs && logs.length > 0) {
-                feedDiv.innerHTML = logs.map(t => `
-                    <div class="feed-item p-3 rounded-lg text-[11px] flex justify-between items-center">
+                // FILTER: Only show what this user hasn't clicked 'X' on
+                const visibleLogs = logs.filter(t => !hiddenLogs.includes(t.id));
+
+                feedDiv.innerHTML = visibleLogs.map(t => `
+                    <div class="feed-item p-3 rounded-lg text-[11px] flex justify-between items-center mb-2">
                         <span><b class="blaze-orange">${t.sender}</b> → <b>${t.receiver}</b></span>
-                        <span class="font-mono text-orange-500 font-bold">+${t.amount.toLocaleString()}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono text-orange-500 font-bold">+${t.amount.toLocaleString()}</span>
+                            <button onclick="hideLogLocal(${t.id})" class="text-zinc-700 hover:text-red-500 font-bold px-1 transition">✕</button>
+                        </div>
                     </div>
                 `).join('');
             }
         }
 
-        async function mint() {
-            const { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
-            const newBal = data.balance + 10000;
-            await sb.from('profiles').update({ balance: newBal }).eq('username', user.username);
-            
-            // Log the minting as a transaction
-            await sb.from('transactions').insert([{ sender: 'SYSTEM', receiver: user.username, amount: 10000 }]);
-            
+        // HIDE LOG ONLY FOR ME
+        function hideLogLocal(id) {
+            hiddenLogs.push(id);
+            localStorage.setItem('hiddenLogs', JSON.stringify(hiddenLogs));
             refresh();
         }
 
+        function clearAllLocal() {
+            if(confirm("Restore all hidden transaction logs?")) {
+                hiddenLogs = [];
+                localStorage.removeItem('hiddenLogs');
+                refresh();
+            }
+        }
+
+        // MINTING (ADMIN)
+        async function mint() {
+            const { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            await sb.from('profiles').update({ balance: data.balance + 10000 }).eq('username', user.username);
+            await sb.from('transactions').insert([{ sender: 'SYSTEM', receiver: user.username, amount: 10000 }]);
+            refresh();
+        }
+
+        // SENDING
         async function send() {
             const target = document.getElementById('target').value.trim();
             const amount = parseInt(document.getElementById('amt').value);
 
-            if (!target || isNaN(amount) || amount <= 0) return alert("Invalid transfer details");
-            if (target === user.username) return alert("Cannot send to self");
+            if (!target || isNaN(amount) || amount <= 0) return alert("Invalid Data");
+            if (target === user.username) return alert("Self-transfer blocked");
 
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             const { data: them } = await sb.from('profiles').select('balance').eq('username', target).single();
 
-            if (!them) return alert("Recipient not found in database");
-            if (me.balance < amount) return alert("Insufficient Yazo balance");
+            if (!them) return alert("User not found");
+            if (me.balance < amount) return alert("Insufficient Funds");
 
-            // Execute moves
             await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', user.username);
             await sb.from('profiles').update({ balance: them.balance + amount }).eq('username', target);
-            
-            // Record in Feed
             await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: amount }]);
 
-            alert("Transfer Complete!");
             document.getElementById('target').value = "";
             document.getElementById('amt').value = "";
             refresh();
