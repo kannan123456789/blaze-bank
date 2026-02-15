@@ -1,125 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>BLAZE BANK</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLAZE BANK | YAZO</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; }
+        .blaze-orange { color: #ff5f00; }
+        .blaze-bg { background-color: #ff5f00; }
+        .blaze-border { border: 1px solid #ff5f00; box-shadow: 0 0 20px rgba(255, 95, 0, 0.1); }
+        input { background: #111 !important; border: 1px solid #333 !important; color: white !important; }
+        .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.05); }
+    </style>
 </head>
-<body class="bg-black text-white flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div id="login" class="bg-zinc-900 p-8 rounded-3xl border border-orange-600 text-center w-80">
-        <h1 class="text-3xl font-black text-orange-500 mb-6 italic uppercase">Blaze Bank</h1>
-        <input id="u" type="text" placeholder="Username" class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded">
-        <input id="p" type="password" placeholder="Password" class="w-full p-2 mb-4 bg-black border border-zinc-700 rounded">
-        <button onclick="auth()" class="w-full bg-orange-600 py-2 rounded font-bold hover:bg-orange-500">ENTER</button>
+    <div id="login-screen" class="w-full max-w-md p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center">
+        <h1 class="text-5xl font-black italic blaze-orange mb-2">BLAZE BANK</h1>
+        <p class="text-zinc-500 text-xs uppercase tracking-widest mb-8">Yazo Currency System</p>
+        <input id="u" type="text" placeholder="Username" class="w-full p-4 mb-4 rounded-xl outline-none focus:border-orange-500">
+        <input id="p" type="password" placeholder="Password" class="w-full p-4 mb-6 rounded-xl outline-none focus:border-orange-500">
+        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:opacity-90 transition">Enter Vault</button>
     </div>
 
-    <div id="bank" class="hidden w-80 text-center">
-        <h2 id="name" class="text-orange-500 italic font-bold mb-4"></h2>
-        <div class="bg-zinc-900 p-6 rounded-3xl border-2 border-orange-500 mb-4">
-            <p class="text-xs text-zinc-400">YAZO BALANCE</p>
-            <h1 id="bal" class="text-5xl font-black">0</h1>
+    <div id="dashboard" class="hidden w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="user-display" class="text-2xl font-bold italic blaze-orange uppercase"></h2>
+            <button onclick="location.reload()" class="text-zinc-500 text-xs hover:text-white">LOGOUT</button>
         </div>
-        <button id="admin" onclick="mint()" class="hidden w-full bg-yellow-500 text-black p-3 rounded-xl mb-4 font-black text-xs">⚡ MINT 10,000 YAZOS ⚡</button>
-        <div class="bg-zinc-900 p-4 rounded-xl">
-            <input id="to" type="text" placeholder="Send to..." class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded text-xs">
-            <input id="amt" type="number" placeholder="Amount" class="w-full p-2 mb-2 bg-black border border-zinc-700 rounded text-xs">
-            <button onclick="send()" class="w-full border border-orange-500 text-orange-500 py-2 rounded text-xs">SEND</button>
+
+        <div class="p-8 rounded-3xl bg-zinc-900 blaze-border text-center mb-6">
+            <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-1">Available Yazos</p>
+            <h1 class="text-6xl font-black italic"><span id="bal">0</span></h1>
+        </div>
+
+        <button id="admin-btn" onclick="mint()" class="hidden w-full mb-6 bg-yellow-500 text-black font-black py-4 rounded-2xl text-sm italic uppercase shadow-[0_0_15px_rgba(234,179,8,0.3)]">
+            ⚡ MINT 10,000 YAZOS (ADMIN) ⚡
+        </button>
+
+        <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 mb-6">
+            <h3 class="text-[10px] font-bold mb-4 text-orange-500 uppercase tracking-widest">Send Currency</h3>
+            <input id="target" type="text" placeholder="Recipient Username" class="w-full p-3 mb-3 rounded-lg text-sm">
+            <input id="amt" type="number" placeholder="Amount" class="w-full p-3 mb-4 rounded-lg text-sm">
+            <button onclick="send()" class="w-full py-3 rounded-lg border border-orange-500 text-orange-500 font-bold hover:bg-orange-500 hover:text-black transition text-sm">EXECUTE TRANSFER</button>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
+            <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase tracking-widest">Live Activity Feed</h3>
+            <div id="feed" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                <p class="text-zinc-600 text-xs italic text-center">Syncing with blockchain...</p>
+            </div>
         </div>
     </div>
 
     <script>
         // --- CONFIGURATION ---
-        // MAKE SURE THERE ARE NO SPACES AROUND THE URL OR KEY
-        const MY_URL = 'https://xctauoqsgsaphnranqix.supabase.co'; 
-        const MY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
+        const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co'; 
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
 
-        // --- SAFETY CHECK ---
-        if (MY_URL.includes("PASTE_URL") || !MY_URL.startsWith("https")) {
-            alert("❌ ERROR: You haven't pasted your Supabase URL correctly! It should start with https://");
-        }
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+        let user = null;
 
-        let sb;
-        try {
-            sb = supabase.createClient(MY_URL, MY_KEY);
-        } catch (e) {
-            alert("❌ CONNECTION ERROR: " + e.message);
-        }
-
-        let currentUser = null;
-
+        // --- AUTHENTICATION ---
         async function auth() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value;
 
-            if (!u || !p) return alert("Fill in username/password");
+            if (!u || !p) return alert("Missing credentials");
 
-            // Look for user
             try {
-                const { data, error } = await sb.from('profiles').select('*').eq('username', u).single();
-                
-                if (error && error.code !== 'PGRST116') {
-                    alert("Database Error: " + error.message + "\n\nTip: Make sure RLS is DISABLED in Supabase!");
-                    return;
-                }
+                let { data: acc, error } = await sb.from('profiles').select('*').eq('username', u).single();
 
-                if (data) {
-                    if (data.password === p) loginSuccess(data);
-                    else alert("Wrong password!");
+                if (acc) {
+                    if (acc.password === p) start(acc);
+                    else alert("Access Denied: Invalid Password");
                 } else {
-                    // Create user
-                    const { data: newUser, error: createError } = await sb.from('profiles').insert([
-                        { username: u, password: p, balance: 500 }
-                    ]).select().single();
-                    
-                    if (createError) alert("Error creating account: " + createError.message);
-                    else loginSuccess(newUser);
+                    if(confirm("Account not found. Create new profile for '" + u + "'?")) {
+                        const { data: n, error: e } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
+                        if (e) alert("Error: " + e.message);
+                        else start(n);
+                    }
                 }
             } catch (err) {
-                alert("Critical System Error: " + err.message);
+                alert("Connection failed. Check your Keys and RLS settings.");
             }
         }
 
-        function loginSuccess(acc) {
-            currentUser = acc;
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('bank').style.display = 'block';
-            document.getElementById('name').innerText = currentUser.username;
+        function start(acc) {
+            user = acc;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('user-display').innerText = user.username;
+            if (user.username === 'vanish_blader 17') document.getElementById('admin-btn').classList.remove('hidden');
+            refresh();
+            // Refresh feed every 10 seconds automatically
+            setInterval(refresh, 10000);
+        }
+
+        // --- CORE FUNCTIONS ---
+        async function refresh() {
+            // Update My Balance
+            const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            document.getElementById('bal').innerText = me.balance.toLocaleString();
+
+            // Update Feed
+            const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(5);
+            const feedDiv = document.getElementById('feed');
             
-            if (currentUser.username === 'vanish_blader 17') {
-                document.getElementById('admin').style.display = 'block';
+            if (logs && logs.length > 0) {
+                feedDiv.innerHTML = logs.map(t => `
+                    <div class="feed-item p-3 rounded-lg text-[11px] flex justify-between items-center">
+                        <span><b class="blaze-orange">${t.sender}</b> → <b>${t.receiver}</b></span>
+                        <span class="font-mono text-orange-500 font-bold">+${t.amount.toLocaleString()}</span>
+                    </div>
+                `).join('');
             }
-            refreshBalance();
-        }
-
-        async function refreshBalance() {
-            const { data } = await sb.from('profiles').select('balance').eq('username', currentUser.username).single();
-            document.getElementById('bal').innerText = data.balance.toLocaleString();
         }
 
         async function mint() {
-            const { data } = await sb.from('profiles').select('balance').eq('username', currentUser.username).single();
-            await sb.from('profiles').update({ balance: data.balance + 10000 }).eq('username', currentUser.username);
-            refreshBalance();
+            const { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            const newBal = data.balance + 10000;
+            await sb.from('profiles').update({ balance: newBal }).eq('username', user.username);
+            
+            // Log the minting as a transaction
+            await sb.from('transactions').insert([{ sender: 'SYSTEM', receiver: user.username, amount: 10000 }]);
+            
+            refresh();
         }
 
         async function send() {
-            const target = document.getElementById('to').value.trim();
+            const target = document.getElementById('target').value.trim();
             const amount = parseInt(document.getElementById('amt').value);
 
-            if (!target || isNaN(amount)) return alert("Enter target and amount");
+            if (!target || isNaN(amount) || amount <= 0) return alert("Invalid transfer details");
+            if (target === user.username) return alert("Cannot send to self");
 
-            const { data: me } = await sb.from('profiles').select('balance').eq('username', currentUser.username).single();
+            const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             const { data: them } = await sb.from('profiles').select('balance').eq('username', target).single();
 
-            if (!them) return alert("User not found!");
-            if (me.balance < amount) return alert("Not enough Yazos!");
+            if (!them) return alert("Recipient not found in database");
+            if (me.balance < amount) return alert("Insufficient Yazo balance");
 
-            await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', currentUser.username);
+            // Execute moves
+            await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', user.username);
             await sb.from('profiles').update({ balance: them.balance + amount }).eq('username', target);
             
-            alert("Transfer Successful!");
-            refreshBalance();
+            // Record in Feed
+            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: amount }]);
+
+            alert("Transfer Complete!");
+            document.getElementById('target').value = "";
+            document.getElementById('amt').value = "";
+            refresh();
         }
     </script>
 </body>
