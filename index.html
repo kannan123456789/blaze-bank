@@ -7,45 +7,50 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; }
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background-color: #ff5f00; }
-        .blaze-border { border: 1px solid #ff5f00; box-shadow: 0 0 20px rgba(255, 95, 0, 0.1); }
+        .blaze-border { border: 1px solid #ff5f00; }
         input { background: #111 !important; border: 1px solid #333 !important; color: white !important; }
-        .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.05); transition: all 0.3s ease; }
-        .admin-glow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.05); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div id="login-screen" class="w-full max-w-md p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center">
-        <h1 class="text-5xl font-black italic blaze-orange mb-2">BLAZE BANK</h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.3em] mb-8">Secure Yazo Terminal</p>
-        <input id="u" type="text" placeholder="Username" class="w-full p-4 mb-4 rounded-xl outline-none focus:border-orange-500">
-        <input id="p" type="password" placeholder="Password" class="w-full p-4 mb-6 rounded-xl outline-none focus:border-orange-500">
-        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition">Enter Vault</button>
+        <h1 class="text-5xl font-black italic blaze-orange mb-2 uppercase">Blaze Bank</h1>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.3em] mb-8">Yazo Currency System</p>
+        
+        <input id="u" type="text" placeholder="Username" class="w-full p-4 mb-4 rounded-xl outline-none">
+        
+        <div class="relative mb-6">
+            <input id="p" type="password" placeholder="Password" class="w-full p-4 rounded-xl outline-none">
+            <button onclick="togglePass()" class="absolute right-4 top-4 text-zinc-500">👁️</button>
+        </div>
+
+        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:opacity-90 transition">Start Banking</button>
     </div>
 
     <div id="dashboard" class="hidden w-full max-w-md">
         <div class="flex justify-between items-center mb-6">
-            <h2 id="user-display" class="text-2xl font-bold italic blaze-orange uppercase"></h2>
-            <button onclick="location.reload()" class="text-zinc-500 text-xs hover:text-white uppercase tracking-tighter">Exit System</button>
+            <h2 id="user-display" class="text-2xl font-bold italic blaze-orange"></h2>
+            <button onclick="location.reload()" class="text-zinc-500 text-xs hover:text-white uppercase">Log out</button>
         </div>
 
         <div class="p-8 rounded-3xl bg-zinc-900 blaze-border text-center mb-6">
-            <p class="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-1">Account Balance</p>
+            <p class="text-zinc-500 text-[10px] uppercase mb-1">Account Balance</p>
             <h1 class="text-6xl font-black italic"><span id="bal">0</span> <span class="text-sm blaze-orange">YZ</span></h1>
         </div>
 
-        <button id="admin-btn" onclick="mint()" class="hidden w-full mb-6 bg-yellow-500 text-black font-black py-4 rounded-2xl text-sm italic uppercase admin-glow">
-            ⚡ MINT 10,000 YAZOS ⚡
+        <button onclick="openAI()" class="w-full mb-3 bg-blue-600 text-white font-bold py-3 rounded-xl text-xs uppercase flex items-center justify-center gap-2">
+            ✨ Ask Gemini AI
         </button>
+
+        <button id="admin-btn" onclick="mint()" class="hidden w-full mb-6 bg-yellow-500 text-black font-black py-4 rounded-2xl text-sm italic uppercase">⚡ MINT 10,000 YAZOS ⚡</button>
 
         <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 mb-6">
             <h3 class="text-[10px] font-bold mb-4 text-orange-500 uppercase tracking-widest">Global Transfer</h3>
-            <input id="target" type="text" placeholder="Recipient Name" class="w-full p-3 mb-3 rounded-lg text-sm">
+            <input id="target" type="text" placeholder="Recipient" class="w-full p-3 mb-2 rounded-lg text-sm">
             <input id="amt" type="number" placeholder="Amount" class="w-full p-3 mb-4 rounded-lg text-sm">
             <button onclick="send()" class="w-full py-3 rounded-lg border border-orange-500 text-orange-500 font-bold hover:bg-orange-500 hover:text-black transition text-sm">SEND YAZOS</button>
         </div>
@@ -53,97 +58,87 @@
         <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Activity Feed</h3>
-                <button onclick="clearAllLocal()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase">Reset View</button>
+                <button onclick="resetLogs()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase">Reset Logs</button>
             </div>
-            <div id="feed" class="space-y-3 max-h-48 overflow-y-auto pr-2">
-                <p class="text-zinc-600 text-xs italic text-center">Awaiting data...</p>
-            </div>
+            <div id="feed" class="space-y-3 max-h-48 overflow-y-auto pr-2 text-xs"></div>
         </div>
     </div>
 
     <script>
-        // 1. YOUR CONNECTION DATA
-        const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co'; 
+        const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
+        const GEMINI_KEY = 'AIzaSyBovbGnZ2H_U1D5J7BCi5u9A6CazTrdouM'; // Add your Gemini Key here
 
         const sb = supabase.createClient(SB_URL, SB_KEY);
         let user = null;
-        
-        // 2. LOCAL HIDE STORAGE
-        let hiddenLogs = JSON.parse(localStorage.getItem('hiddenLogs')) || [];
+        let userHiddenLogs = [];
 
-        // AUTHENTICATION
+        function togglePass() {
+            const p = document.getElementById('p');
+            p.type = p.type === 'password' ? 'text' : 'password';
+        }
+
         async function auth() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value;
-            if (!u || !p) return;
-
-            try {
-                let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
-                if (acc) {
-                    if (acc.password === p) start(acc);
-                    else alert("Access Denied");
-                } else {
-                    if(confirm("Join Blaze Bank as " + u + "?")) {
-                        const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
-                        start(n);
-                    }
-                }
-            } catch (err) { alert("Check your Connection/RLS settings."); }
+            let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
+            if (acc && acc.password === p) start(acc);
+            else if (!acc && confirm("Create account?")) {
+                const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
+                start(n);
+            } else alert("Wrong credentials");
         }
 
-        function start(acc) {
+        async function start(acc) {
             user = acc;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
             document.getElementById('user-display').innerText = user.username;
             if (user.username === 'vanish_blader 17') document.getElementById('admin-btn').classList.remove('hidden');
+            
+            // Load this user's hidden logs from Supabase
+            const { data } = await sb.from('hidden_logs').select('transaction_id').eq('username', user.username);
+            userHiddenLogs = data.map(i => i.transaction_id);
+            
             refresh();
-            setInterval(refresh, 5000); // Auto-sync feed every 5s
+            setInterval(refresh, 8000);
         }
 
-        // REFRESH DATA
         async function refresh() {
-            // Get Balance
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             document.getElementById('bal').innerText = me.balance.toLocaleString();
 
-            // Get Feed
-            const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(30);
+            const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(40);
             const feedDiv = document.getElementById('feed');
             
-            if (logs && logs.length > 0) {
-                // FILTER: Only show what this user hasn't clicked 'X' on
-                const visibleLogs = logs.filter(t => !hiddenLogs.includes(t.id));
+            // Filter out logs hidden by this specific user
+            const visible = logs.filter(t => !userHiddenLogs.includes(t.id));
 
-                feedDiv.innerHTML = visibleLogs.map(t => `
-                    <div class="feed-item p-3 rounded-lg text-[11px] flex justify-between items-center mb-2">
-                        <span><b class="blaze-orange">${t.sender}</b> → <b>${t.receiver}</b></span>
-                        <div class="flex items-center gap-3">
-                            <span class="font-mono text-orange-500 font-bold">+${t.amount.toLocaleString()}</span>
-                            <button onclick="hideLogLocal(${t.id})" class="text-zinc-700 hover:text-red-500 font-bold px-1 transition">✕</button>
-                        </div>
+            feedDiv.innerHTML = visible.map(t => `
+                <div class="feed-item p-3 rounded-lg flex justify-between items-center mb-2">
+                    <span><b>${t.sender}</b> → <b>${t.receiver}</b></span>
+                    <div class="flex items-center gap-3">
+                        <span class="blaze-orange font-bold">+${t.amount}</span>
+                        <button onclick="hideLogAccount(${t.id})" class="text-zinc-700 hover:text-white">✕</button>
                     </div>
-                `).join('');
-            }
+                </div>
+            `).join('');
         }
 
-        // HIDE LOG ONLY FOR ME
-        function hideLogLocal(id) {
-            hiddenLogs.push(id);
-            localStorage.setItem('hiddenLogs', JSON.stringify(hiddenLogs));
+        async function hideLogAccount(id) {
+            userHiddenLogs.push(id);
+            await sb.from('hidden_logs').insert([{ username: user.username, transaction_id: id }]);
             refresh();
         }
 
-        function clearAllLocal() {
-            if(confirm("Restore all hidden transaction logs?")) {
-                hiddenLogs = [];
-                localStorage.removeItem('hiddenLogs');
+        async function resetLogs() {
+            if(confirm("Unhide all logs?")) {
+                await sb.from('hidden_logs').delete().eq('username', user.username);
+                userHiddenLogs = [];
                 refresh();
             }
         }
 
-        // MINTING (ADMIN)
         async function mint() {
             const { data } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             await sb.from('profiles').update({ balance: data.balance + 10000 }).eq('username', user.username);
@@ -151,27 +146,37 @@
             refresh();
         }
 
-        // SENDING
         async function send() {
             const target = document.getElementById('target').value.trim();
             const amount = parseInt(document.getElementById('amt').value);
-
-            if (!target || isNaN(amount) || amount <= 0) return alert("Invalid Data");
-            if (target === user.username) return alert("Self-transfer blocked");
-
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             const { data: them } = await sb.from('profiles').select('balance').eq('username', target).single();
 
-            if (!them) return alert("User not found");
-            if (me.balance < amount) return alert("Insufficient Funds");
+            if (them && me.balance >= amount) {
+                await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', user.username);
+                await sb.from('profiles').update({ balance: them.balance + amount }).eq('username', target);
+                await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: amount }]);
+                refresh();
+            } else alert("Error: User not found or no money");
+        }
 
-            await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', user.username);
-            await sb.from('profiles').update({ balance: them.balance + amount }).eq('username', target);
-            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: amount }]);
-
-            document.getElementById('target').value = "";
-            document.getElementById('amt').value = "";
-            refresh();
+        // GEMINI AI INTEGRATION
+        async function openAI() {
+            const prompt = prompt("Ask Blaze AI Assistant:");
+            if(!prompt) return;
+            
+            // Simple Gemini API call example
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                alert("Blaze AI: " + data.candidates[0].content.parts[0].text);
+            } catch (e) {
+                alert("AI currently offline. Check API Key.");
+            }
         }
     </script>
 </body>
