@@ -14,7 +14,7 @@
         input { background: #111 !important; border: 1px solid #333 !important; color: white !important; }
         .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.05); }
         .user-pill { background: #111; border: 1px solid #222; transition: 0.3s; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .status-dot { width: 8px; height: 8px; rounded: 50%; border-radius: 50%; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; } /* Fixed CSS here */
         .online { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
         .offline { background-color: #eab308; }
     </style>
@@ -65,20 +65,15 @@
 
         <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-[10px] font-bold text-zinc-500 uppercase">Transaction Logs</h3>
-                <button onclick="hideAllLogs()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase font-black">Clear All History</button>
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase">Private Ledger</h3>
+                <div class="flex gap-3">
+                    <button onclick="hideAllLogs()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase font-black">Hide All</button>
+                    <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-black">Reset</button>
+                </div>
             </div>
             <div id="feed" class="space-y-3 max-h-60 overflow-y-auto pr-2 text-xs text-zinc-500 italic">No visible activity</div>
         </div>
     </div>
-    <div class="flex justify-between items-center mb-4">
-    <h3 class="text-[10px] font-bold text-zinc-500 uppercase">Private Ledger</h3>
-    <div class="flex gap-4">
-        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase font-black">Hide All</button>
-        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-black">Reset Logs</button>
-    </div>
-</div>
-
 
     <script>
         const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co';
@@ -106,15 +101,14 @@
             document.getElementById('dashboard').classList.remove('hidden');
             document.getElementById('user-display').innerText = user.username;
             
-            // Sabaris Admin Check
             if(user.username === 'Sabaris') document.getElementById('admin-panel').classList.remove('hidden');
             
             const { data } = await sb.from('hidden_logs').select('transaction_id').eq('username', user.username);
             userHiddenLogs = data ? data.map(i => i.transaction_id) : [];
             
             refresh();
-            setInterval(heartbeat, 5000); // Send status
-            setInterval(refresh, 5000); // Get updates
+            setInterval(heartbeat, 5000); 
+            setInterval(refresh, 5000); 
         }
 
         async function heartbeat() {
@@ -122,17 +116,16 @@
         }
 
         async function refresh() {
-            // Update Balance
             const { data: me } = await sb.from('profiles').select('*').eq('username', user.username).single();
+            if(!me) return;
             document.getElementById('bal').innerText = me.balance.toLocaleString();
             user.is_frozen = me.is_frozen;
 
-            // Update Directory with Status Dots
             const { data: allUsers } = await sb.from('profiles').select('username, last_seen, is_frozen');
             const now = new Date();
             document.getElementById('user-list').innerHTML = allUsers.map(u => {
                 const lastSeen = new Date(u.last_seen);
-                const isOnline = (now - lastSeen) < 15000; // Online if active in last 15s
+                const isOnline = (now - lastSeen) < 15000;
                 return `
                     <button onclick="document.getElementById('target').value='${u.username}'" 
                             class="user-pill px-3 py-1 rounded-full text-[10px] ${u.is_frozen ? 'border-red-900' : 'border-zinc-800'} font-bold text-zinc-400">
@@ -142,7 +135,6 @@
                 `;
             }).join('');
 
-            // Update Feed (Privacy: Only Sender or Receiver)
             const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false });
             if (logs) {
                 const privateLogs = logs.filter(t => 
@@ -161,12 +153,12 @@
                         </div>
                         <p class="text-[10px] text-zinc-500 mt-1 italic">"${t.note || 'No note'}"</p>
                     </div>
-                `).join('') : '<p class="text-center py-4 text-zinc-700">No recent private transactions</p>';
+                `).join('') : '<p class="text-center py-4 text-zinc-700">No recent transactions</p>';
             }
         }
 
         async function hideAllLogs() {
-            if(!confirm("Hide all current transactions from your history?")) return;
+            if(!confirm("Hide current history?")) return;
             const { data: logs } = await sb.from('transactions').select('id').or(`sender.eq.${user.username},receiver.eq.${user.username}`);
             for(let log of logs) {
                 if(!userHiddenLogs.includes(log.id)) {
@@ -178,7 +170,7 @@
         }
 
         async function send() {
-            if(user.is_frozen) return alert("YOUR ACCOUNT IS FROZEN!.");
+            if(user.is_frozen) return alert("ACCOUNT FROZEN");
             const target = document.getElementById('target').value.trim();
             const amount = parseInt(document.getElementById('amt').value);
             const note = document.getElementById('note').value.trim();
@@ -191,10 +183,9 @@
                 await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount, note }]);
                 document.getElementById('target').value = ""; document.getElementById('amt').value = ""; document.getElementById('note').value = "";
                 refresh();
-            } else alert("Transaction blocked or user not found.");
+            } else alert("Error: User not found or insufficient funds.");
         }
 
-        // Admin functions for Sabaris
         async function addYazos(amt) {
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             await sb.from('profiles').update({ balance: me.balance + amt }).eq('username', user.username);
@@ -202,7 +193,7 @@
         }
 
         async function toggleFreeze() {
-            const target = prompt("Username to Freeze:");
+            const target = prompt("Username to Freeze/Unfreeze:");
             if(!target) return;
             const { data: t } = await sb.from('profiles').select('is_frozen').eq('username', target).single();
             await sb.from('profiles').update({ is_frozen: !t.is_frozen }).eq('username', target);
@@ -216,56 +207,32 @@
         }
 
         async function openAI(event) {
-    const pStr = prompt("How can I help?");
-    if(!pStr) return;
-    
-    const btn = event.currentTarget;
-    const originalText = btn.innerText;
-    btn.innerText = "SYNCING...";
-    
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ contents: [{ parts: [{ text: pStr }] }] })
-        });
-        
-        const d = await res.json();
-        
-        if (d.error) {
-            alert("AI Error: " + d.error.message);
-        } else {
-            alert("Blaze AI: " + d.candidates[0].content.parts[0].text);
+            const pStr = prompt("How can I help?");
+            if(!pStr) return;
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = "SYNCING...";
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: pStr }] }] })
+                });
+                const d = await res.json();
+                if (d.error) alert("AI Error: " + d.error.message);
+                else alert("Blaze AI: " + d.candidates[0].content.parts[0].text);
+            } catch (e) { alert("Connection Error."); }
+            finally { btn.innerText = originalText; }
         }
-    } catch (e) { 
-        alert("Connection Error: Pls check your internet connection."); 
-    } finally { 
-        btn.innerText = originalText; 
-    }
-}
+
         async function resetLogs() {
-    if(!confirm("Bring back all hidden transactions?")) return;
-    
-    // Deletes your personal 'hide' list from Supabase
-    const { error } = await sb.from('hidden_logs')
-        .delete()
-        .eq('username', user.username);
-
-    if(!error) {
-        userHiddenLogs = []; // Clear the local list
-        refresh(); // Reload the feed
-        alert("Logs Restored.");
-    } else {
-        alert("Error resetting logs.");
-    }
-}
-
-
-
+            if(!confirm("Restore hidden history?")) return;
+            const { error } = await sb.from('hidden_logs').delete().eq('username', user.username);
+            if(!error) { userHiddenLogs = []; refresh(); alert("Logs Restored."); }
+        }
     </script>
 </body>
 </html>
-
 
 
 
