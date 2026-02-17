@@ -170,7 +170,7 @@
         }
 
         async function send() {
-            if(user.is_frozen) return alert("VAULT FROZEN.");
+            if(user.is_frozen) return alert("YOUR ACCOUNT IS FROZEN!.");
             const target = document.getElementById('target').value.trim();
             const amount = parseInt(document.getElementById('amt').value);
             const note = document.getElementById('note').value.trim();
@@ -230,7 +230,7 @@
             alert("Blaze AI: " + d.candidates[0].content.parts[0].text);
         }
     } catch (e) { 
-        alert("Connection Error: Check your internet or API key."); 
+        alert("Connection Error: Pls check your internet connection."); 
     } finally { 
         btn.innerText = originalText; 
     }
@@ -239,6 +239,7 @@
     </script>
 </body>
 </html>
+
 
 
 
