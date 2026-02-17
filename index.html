@@ -208,18 +208,36 @@
         }
 
         async function openAI(event) {
-            const pStr = prompt("How can I help?");
-            if(!pStr) return;
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: pStr }] }] })
-                });
-                const d = await res.json();
-                alert("AI: " + d.candidates[0].content.parts[0].text);
-            } catch (e) { alert("AI Fail"); }
+    const pStr = prompt("How can I help?");
+    if(!pStr) return;
+    
+    const btn = event.currentTarget;
+    const originalText = btn.innerText;
+    btn.innerText = "SYNCING...";
+    
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ contents: [{ parts: [{ text: pStr }] }] })
+        });
+        
+        const d = await res.json();
+        
+        if (d.error) {
+            alert("AI Error: " + d.error.message);
+        } else {
+            alert("Blaze AI: " + d.candidates[0].content.parts[0].text);
         }
+    } catch (e) { 
+        alert("Connection Error: Check your internet or API key."); 
+    } finally { 
+        btn.innerText = originalText; 
+    }
+}
+
     </script>
 </body>
 </html>
+
 
