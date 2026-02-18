@@ -3,98 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLAZE BANK | Safe Terminal</title>
+    <title>BLAZE BANK | Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; }
+        body { background-color: #050505; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background-color: #ff5f00; }
         .blaze-border { border: 1px solid #ff5f00; }
-        input { background: #0a0a0a !important; border: 1px solid #222 !important; color: white !important; transition: 0.2s; }
-        input:focus { border-color: #ff5f00 !important; outline: none; }
-        .feed-item { border-left: 2px solid #ff5f00; background: rgba(255, 95, 0, 0.03); }
-        .user-pill { background: #0a0a0a; border: 1px solid #1a1a1a; transition: 0.3s; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .user-pill:hover { border-color: #ff5f00; }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
-        .online { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .offline { background-color: #444; }
+        input, textarea { background: #0a0a0a !important; border: 1px solid #222 !important; color: white !important; outline: none; }
+        input:focus { border-color: #ff5f00 !important; }
         .chat-bubble { background: #111; border: 1px solid #222; border-radius: 12px; padding: 8px 12px; font-size: 11px; max-width: 85%; }
         .chat-me { border-right: 2px solid #ff5f00; margin-left: auto; }
-        .chat-sabaris { border-left: 2px solid #3b82f6; }
+        .chat-other { border-left: 2px solid #444; }
+        .chat-sabaris { border-left: 2px solid #3b82f6; color: #3b82f6; }
+        .modal { backdrop-filter: blur(10px); background: rgba(0,0,0,0.8); }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .online { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .offline { background-color: #eab308; }
     </style>
 </head>
-<body class="flex items-start justify-center min-h-screen p-4 overflow-y-auto">
+<body class="flex items-start justify-center min-h-screen p-4">
 
-    <div id="login-screen" class="w-full max-w-md mt-20 p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center">
+    <div id="login-screen" class="w-full max-w-md mt-20 p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center shadow-2xl">
         <h1 class="text-5xl font-black italic blaze-orange mb-2 uppercase tracking-tighter">Blaze Bank</h1>
-        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.3em] mb-8">Secure Terminal v2.0</p>
+        <p class="text-zinc-500 text-[10px] uppercase tracking-[0.3em] mb-8">Unrestricted Terminal v4.0</p>
         <input id="u" type="text" placeholder="Username" class="w-full p-4 mb-4 rounded-xl">
         <input id="p" type="password" placeholder="Password" class="w-full p-4 mb-6 rounded-xl">
-        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:brightness-110 transition shadow-lg shadow-orange-900/20">Start Banking</button>
+        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:brightness-110 transition">Sync Identity</button>
     </div>
 
-    <div id="dashboard" class="hidden w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+    <div id="dashboard" class="hidden w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20">
         
         <div class="space-y-6">
-            <div id="admin-panel" class="hidden p-6 rounded-3xl border-2 border-dashed border-orange-600 bg-orange-600/10">
-                <h3 class="text-[10px] font-black text-orange-500 uppercase mb-4 tracking-[0.2em]">Admin Panel</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="addYazos(10000)" class="py-3 bg-orange-600 text-black font-black rounded-xl text-[10px] uppercase">Give 10k YZ</button>
-                    <button onclick="toggleFreeze()" class="py-3 bg-zinc-800 text-white font-black rounded-xl text-[10px] uppercase">Freeze User</button>
-                </div>
-            </div>
-
-            <div class="p-8 rounded-3xl bg-zinc-900 blaze-border text-center shadow-2xl shadow-orange-900/10">
+            <div class="p-8 rounded-3xl bg-zinc-900 blaze-border shadow-2xl text-center">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="user-display" class="text-xl font-bold italic blaze-orange uppercase"></h2>
-                    <button onclick="location.reload()" class="text-zinc-600 text-[10px] hover:text-white uppercase font-black tracking-widest">Logout</button>
+                    <span id="user-display" class="font-bold italic blaze-orange uppercase text-sm tracking-wider"></span>
+                    <button onclick="location.reload()" class="text-[10px] text-zinc-600 hover:text-white uppercase font-black">Close</button>
                 </div>
-                <p class="text-zinc-500 text-[10px] uppercase mb-1 tracking-widest">Available Balance</p>
-                <h1 class="text-6xl font-black italic mb-6"><span id="bal">0</span> <span class="text-sm blaze-orange tracking-tighter">YZ</span></h1>
-                <button onclick="openAI(event)" class="w-full bg-black border border-orange-500/30 text-orange-500 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest hover:border-orange-500 transition">✨ Ask Blaze AI</button>
+                <p class="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">Total Assets</p>
+                <h1 class="text-6xl font-black italic mb-6"><span id="bal">0</span> <span class="text-sm blaze-orange">YZ</span></h1>
+                <button onclick="openAI(event)" class="w-full bg-black border border-orange-500/30 text-orange-500 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest hover:border-orange-500 transition">✨ Terminal AI</button>
             </div>
 
             <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
-                <h3 class="text-[10px] font-bold mb-4 text-orange-500 uppercase tracking-widest">Secure Transfer</h3>
-                <input id="target" type="text" placeholder="Recipient Username" class="w-full p-3 mb-2 rounded-xl text-sm">
-                <input id="amt" type="number" placeholder="Amount (YZ)" class="w-full p-3 mb-2 rounded-xl text-sm">
-                <input id="note" type="text" placeholder="Private Note" class="w-full p-3 mb-4 rounded-xl text-sm italic">
-                <button onclick="send()" class="w-full py-4 rounded-xl border border-orange-500 text-orange-500 font-black hover:bg-orange-500 hover:text-black transition text-xs uppercase tracking-widest">Confirm Transaction</button>
+                <h3 class="text-[10px] font-bold mb-4 text-orange-500 uppercase tracking-widest">YZ Transfer</h3>
+                <input id="target" type="text" placeholder="Recipient UID" class="w-full p-3 mb-2 rounded-xl text-xs">
+                <input id="amt" type="number" placeholder="Amount" class="w-full p-3 mb-2 rounded-xl text-xs">
+                <input id="note" type="text" placeholder="Note" class="w-full p-3 mb-4 rounded-xl text-xs">
+                <button onclick="send()" class="w-full py-3 rounded-xl blaze-bg text-black font-black text-xs uppercase">Send Funds</button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 p-6 rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col h-[650px] shadow-xl">
+            <div class="flex flex-col gap-4 mb-4 border-b border-zinc-800 pb-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-[10px] font-black uppercase text-orange-500 tracking-[0.2em]">Communications</h3>
+                    <div class="status-dot online"></div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="mode-global" onclick="setChatMode('global')" class="flex-1 py-1 text-[9px] font-black uppercase rounded-lg bg-orange-500 text-black transition">Global</button>
+                    <button id="mode-private" onclick="setChatMode('private')" class="flex-1 py-1 text-[9px] font-black uppercase rounded-lg bg-zinc-800 text-zinc-500 transition">Inbox</button>
+                </div>
+                <input id="dm-target" type="text" placeholder="Target Username (for Private)" class="hidden w-full p-2 rounded-lg text-[10px] border border-zinc-800">
+            </div>
+            
+            <div id="chat-box" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2"></div>
+            
+            <div class="flex gap-2 bg-black p-2 rounded-2xl border border-zinc-800">
+                <input id="chat-input" type="text" placeholder="Write message..." class="flex-1 bg-transparent border-none p-2 text-xs">
+                <button onclick="handleSendMessage()" class="p-2 blaze-bg rounded-xl text-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.493-7.493Z"/></svg>
+                </button>
             </div>
         </div>
 
         <div class="space-y-6">
-            <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col h-[400px]">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Direct: Sabaris</h3>
-                    <span class="text-[9px] text-zinc-600 italic">End-to-End Private</span>
-                </div>
-                <div id="chat-box" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                    <p class="text-[10px] text-zinc-700 text-center mt-10">No messages yet. Contact Sabaris for help or DCard info.</p>
-                </div>
-                <div class="flex gap-2">
-                    <input id="chat-input" type="text" placeholder="Message Sabaris..." class="flex-1 p-3 rounded-xl text-xs">
-                    <button onclick="sendPrivateMsg()" class="px-4 bg-zinc-800 hover:bg-white hover:text-black transition rounded-xl text-[10px] font-black uppercase">Send</button>
-                </div>
-            </div>
-
-            <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
+            <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 h-[300px] flex flex-col">
                 <h3 class="text-[10px] font-bold text-zinc-500 uppercase mb-4 tracking-widest">Active Directory</h3>
-                <div id="user-list" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto"></div>
+                <div id="user-list" class="flex flex-wrap gap-2 overflow-y-auto"></div>
             </div>
+            <div id="admin-panel" class="hidden p-6 rounded-3xl border-2 border-dashed border-orange-600 bg-orange-600/5">
+                <button onclick="addYazos(10000)" class="w-full py-2 bg-orange-600 text-black font-bold rounded-lg text-[10px] uppercase">Mint 10,000 YZ</button>
+            </div>
+        </div>
+    </div>
 
-            <div class="p-6 rounded-3xl bg-zinc-900 border border-zinc-800">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Transaction Logs</h3>
-                    <div class="flex gap-3">
-                        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-600 hover:text-orange-500 uppercase font-black">Clear</button>
-                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-black">Reset</button>
-                    </div>
-                </div>
-                <div id="feed" class="space-y-3 max-h-48 overflow-y-auto pr-2 text-[11px] text-zinc-500"></div>
+    <button onclick="toggleHelp(true)" class="fixed bottom-6 right-6 px-6 py-3 bg-blue-600 text-white rounded-full flex items-center gap-2 shadow-2xl hover:bg-blue-500 transition-all font-black text-xs uppercase tracking-widest z-40">
+        Report to Sabaris
+    </button>
+
+    <div id="help-modal" class="hidden fixed inset-0 modal z-50 flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-blue-900 w-full max-w-md p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-xl font-black italic text-blue-500 uppercase mb-2 text-center">Admin Ticket</h2>
+            <textarea id="help-msg" placeholder="Message for Sabaris..." class="w-full h-32 p-4 rounded-2xl mb-4 text-sm"></textarea>
+            <div class="flex gap-3">
+                <button onclick="submitHelp()" class="flex-1 py-3 bg-blue-600 text-white font-black rounded-xl text-xs uppercase">Send</button>
+                <button onclick="toggleHelp(false)" class="px-6 py-3 bg-zinc-800 text-zinc-400 font-black rounded-xl text-xs uppercase text-center">Exit</button>
             </div>
         </div>
     </div>
@@ -102,21 +109,21 @@
     <script>
         const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
-        const GEMINI_KEY = 'AIzaSyC7HKJ01y5RXxh-OFmUsKkIZzstKMjHhHU';
+        const GEMINI_KEY = 'AIzaSyCzt2V7MlB3neTHv3IjWAcfXd83TGmabys';
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
         let user = null;
-        let userHiddenLogs = [];
+        let currentMode = 'global'; // global or private
 
         async function auth() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value;
             let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
             if (acc && acc.password === p) start(acc);
-            else if (!acc && confirm("Join Network?")) {
+            else if (!acc && confirm("Initialize new profile?")) {
                 const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500, is_frozen: false}]).select().single();
                 start(n);
-            } else alert("Invalid Login");
+            } else alert("Auth Error");
         }
 
         async function start(acc) {
@@ -124,183 +131,128 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
             document.getElementById('dashboard').classList.add('grid');
-            document.getElementById('user-display').innerText = user.username;
+            document.getElementById('user-display').innerText = `@${user.username}`;
             if(user.username === 'Sabaris') document.getElementById('admin-panel').classList.remove('hidden');
             
-            const { data } = await sb.from('hidden_logs').select('transaction_id').eq('username', user.username);
-            userHiddenLogs = data ? data.map(i => i.transaction_id) : [];
-            
             refresh();
-            setInterval(heartbeat, 5000); 
-            setInterval(refresh, 4000); 
+            setInterval(() => {
+                sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username);
+                refresh();
+            }, 5000);
         }
 
-        async function heartbeat() {
-            await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username);
+        function setChatMode(mode) {
+            currentMode = mode;
+            document.getElementById('mode-global').className = mode === 'global' ? 'flex-1 py-1 text-[9px] font-black uppercase rounded-lg bg-orange-500 text-black' : 'flex-1 py-1 text-[9px] font-black uppercase rounded-lg bg-zinc-800 text-zinc-500';
+            document.getElementById('mode-private').className = mode === 'private' ? 'flex-1 py-1 text-[9px] font-black uppercase rounded-lg bg-blue-500 text-white' : 'flex-1 py-1 text-[9px] font-black uppercase rounded-lg bg-zinc-800 text-zinc-500';
+            document.getElementById('dm-target').classList.toggle('hidden', mode === 'global');
+            refresh();
         }
 
         async function refresh() {
             const { data: me } = await sb.from('profiles').select('*').eq('username', user.username).single();
             if(!me) return;
             document.getElementById('bal').innerText = me.balance.toLocaleString();
-            user.is_frozen = me.is_frozen;
 
-            // Directory
-            const { data: allUsers } = await sb.from('profiles').select('username, last_seen, is_frozen');
-            const now = new Date();
-            document.getElementById('user-list').innerHTML = allUsers.map(u => {
-                const isOnline = (now - new Date(u.last_seen)) < 15000;
-                return `
-                    <button onclick="document.getElementById('target').value='${u.username}'" 
-                            class="user-pill px-3 py-1.5 rounded-xl text-[10px] ${u.is_frozen ? 'border-red-900' : 'border-zinc-800'} font-bold text-zinc-400">
-                        <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
-                        @${u.username}
-                    </button>
-                `;
+            const { data: users } = await sb.from('profiles').select('username, last_seen');
+            document.getElementById('user-list').innerHTML = users.map(u => {
+                const isOnline = (new Date() - new Date(u.last_seen)) < 15000;
+                return `<button onclick="startDM('${u.username}')" class="px-2 py-1 bg-black rounded-lg border border-zinc-800 text-[10px] flex items-center gap-2">
+                    <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div> ${u.username}
+                </button>`;
             }).join('');
 
-            // Logs & Private Messages
             const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false });
-            if (logs) {
-                // Filter regular transactions for the feed
-                const transLogs = logs.filter(t => 
-                    (t.sender === user.username || t.receiver === user.username) && 
-                    t.amount > 0 && !userHiddenLogs.includes(t.id)
-                );
-                document.getElementById('feed').innerHTML = transLogs.length ? transLogs.map(t => `
-                    <div class="feed-item p-3 rounded-xl flex flex-col mb-1 relative">
-                        <div class="flex justify-between items-center w-full">
-                            <span><b class="blaze-orange">${t.sender}</b> → <b>${t.receiver}</b></span>
-                            <div class="flex items-center gap-3">
-                                <span class="font-bold text-white">${t.sender === user.username ? '-' : '+'}${t.amount}</span>
-                                <button onclick="hideLogAccount(${t.id})" class="text-zinc-700 hover:text-white">✕</button>
-                            </div>
-                        </div>
-                        <p class="text-[9px] text-zinc-500 mt-1 italic">"${t.note || 'Memo'}"</p>
-                    </div>
-                `).join('') : '<p class="text-center py-4 text-zinc-700">No activity</p>';
+            if(!logs) return;
 
-                // Private Chat logic: filter 0 amount "transactions" between User and Sabaris
-                const chatMessages = logs.filter(t => 
-                    t.amount === 0 && 
-                    ((t.sender === user.username && t.receiver === 'Sabaris') || 
-                     (t.sender === 'Sabaris' && t.receiver === user.username))
-                ).reverse();
-
-                if(chatMessages.length > 0) {
-                    document.getElementById('chat-box').innerHTML = chatMessages.map(m => `
-                        <div class="chat-bubble ${m.sender === user.username ? 'chat-me' : 'chat-sabaris'}">
-                            <b class="${m.sender === 'Sabaris' ? 'text-blue-400' : 'text-orange-400'} text-[9px] block mb-1 uppercase">${m.sender}</b>
-                            <span class="text-zinc-200">${m.note}</span>
-                        </div>
-                    `).join('');
-                    const box = document.getElementById('chat-box');
-                    box.scrollTop = box.scrollHeight;
-                }
+            let filtered;
+            if(currentMode === 'global') {
+                filtered = logs.filter(t => t.receiver === 'GLOBAL_CHAT');
+            } else {
+                filtered = logs.filter(t => t.amount === 0 && (t.sender === user.username || t.receiver === user.username) && t.receiver !== 'GLOBAL_CHAT');
             }
+
+            document.getElementById('chat-box').innerHTML = filtered.reverse().map(m => `
+                <div class="chat-bubble ${m.sender === user.username ? 'chat-me' : (m.sender === 'Sabaris' ? 'chat-sabaris' : 'chat-other')}">
+                    <b class="text-[9px] opacity-50 block">${m.sender} ${m.receiver !== 'GLOBAL_CHAT' ? '→ ' + m.receiver : ''}</b>
+                    ${m.note}
+                </div>
+            `).join('');
+            const box = document.getElementById('chat-box');
+            box.scrollTop = box.scrollHeight;
         }
 
-        async function sendPrivateMsg() {
-            const input = document.getElementById('chat-input');
-            const msg = input.value.trim();
+        function startDM(name) {
+            setChatMode('private');
+            document.getElementById('dm-target').value = name;
+        }
+
+        async function handleSendMessage() {
+            const msg = document.getElementById('chat-input').value.trim();
             if(!msg) return;
-            if(user.username === 'Sabaris') {
-                const target = prompt("Target Username to reply to:");
-                if(!target) return;
-                await sb.from('transactions').insert([{ sender: 'Sabaris', receiver: target, amount: 0, note: msg }]);
+
+            if(currentMode === 'global') {
+                await sb.from('transactions').insert([{ sender: user.username, receiver: 'GLOBAL_CHAT', amount: 0, note: msg }]);
             } else {
-                await sb.from('transactions').insert([{ sender: user.username, receiver: 'Sabaris', amount: 0, note: msg }]);
+                const target = document.getElementById('dm-target').value.trim();
+                if(!target) return alert("Select a recipient first");
+                await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: msg }]);
             }
-            input.value = "";
+            document.getElementById('chat-input').value = "";
             refresh();
         }
 
         async function openAI(event) {
-            const pStr = (prompt("Secure AI Query:") || "").toLowerCase().trim();
-            if(!pStr) return;
-
-            // Fast Predefined Responses
-            if (pStr.includes("explain blaze") || pStr === "blaze" || pStr === "what is blaze") {
-                return alert("BLAZE TEAM INTENTIONS:\nB - Best\nL - Loving\nA - Armed\nZ - Zesty\nE - Excellent");
-            }
-            if (pStr.includes("zvp") || pStr.includes("zombie virus plan")) {
-                return alert("CLASSIFIED: The Zombie Virus Plan is private.");
-            }
-            if (pStr.includes("blaze bank") || pStr.includes("dcard") || pStr.includes("get dcard")) {
-                return alert("ACTION REQUIRED: Contact Sabaris for all banking and DCard requests.");
-            }
-
-            const btn = event.currentTarget;
-            btn.innerText = "PROCESSING...";
+            const q = (prompt("Query AI:") || "").toLowerCase();
+            const fast = {
+                "blaze": "B-Best, L-Loving, A-Armed, Z-Zesty, E-Excellent.",
+                "zvp": "Private data.",
+                "card": "Contact Sabaris.",
+                "debit": "Contact Sabaris."
+            };
+            for(let k in fast) if(q.includes(k)) return alert(fast[k]);
+            
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: pStr }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] })
                 });
                 const d = await res.json();
-                alert("Blaze AI: " + d.candidates[0].content.parts[0].text);
-            } catch (e) { alert("AI Sync Failed."); }
-            finally { btn.innerText = "✨ Ask Blaze AI"; }
+                alert(d.candidates[0].content.parts[0].text);
+            } catch(e) { alert("Error"); }
+        }
+
+        function toggleHelp(s) { document.getElementById('help-modal').classList.toggle('hidden', !s); }
+        async function submitHelp() {
+            const m = document.getElementById('help-msg').value.trim();
+            await sb.from('transactions').insert([{ sender: user.username, receiver: 'Sabaris', amount: 0, note: `[REPORT]: ${m}` }]);
+            toggleHelp(false);
+            alert("Sent.");
         }
 
         async function send() {
-            if(user.is_frozen) return alert("ACCOUNT FROZEN");
             const target = document.getElementById('target').value.trim();
             const amount = parseInt(document.getElementById('amt').value);
-            const note = document.getElementById('note').value.trim();
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
-            const { data: them } = await sb.from('profiles').select('username, balance, is_frozen').eq('username', target).single();
-
-            if (them && !them.is_frozen && me.balance >= amount && amount > 0) {
+            if(me.balance >= amount) {
                 await sb.from('profiles').update({ balance: me.balance - amount }).eq('username', user.username);
+                const { data: them } = await sb.from('profiles').select('balance').eq('username', target).single();
                 await sb.from('profiles').update({ balance: them.balance + amount }).eq('username', target);
-                await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount, note }]);
-                document.getElementById('target').value = ""; document.getElementById('amt').value = ""; document.getElementById('note').value = "";
+                await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount, note: document.getElementById('note').value }]);
                 refresh();
-            } else alert("Transaction Failed: Check username or balance.");
+            }
         }
-
+        
         async function addYazos(amt) {
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
             await sb.from('profiles').update({ balance: me.balance + amt }).eq('username', user.username);
             refresh();
         }
-
-        async function toggleFreeze() {
-            const target = prompt("Target Username:");
-            if(!target) return;
-            const { data: t } = await sb.from('profiles').select('is_frozen').eq('username', target).single();
-            await sb.from('profiles').update({ is_frozen: !t.is_frozen }).eq('username', target);
-            alert("Status Updated"); refresh();
-        }
-
-        async function hideLogAccount(id) {
-            await sb.from('hidden_logs').insert([{ username: user.username, transaction_id: id }]);
-            userHiddenLogs.push(id);
-            refresh();
-        }
-
-        async function hideAllLogs() {
-            if(!confirm("Wipe visible history?")) return;
-            const { data: logs } = await sb.from('transactions').select('id').or(`sender.eq.${user.username},receiver.eq.${user.username}`);
-            for(let log of logs) {
-                if(!userHiddenLogs.includes(log.id)) {
-                    await sb.from('hidden_logs').insert([{ username: user.username, transaction_id: log.id }]);
-                    userHiddenLogs.push(log.id);
-                }
-            }
-            refresh();
-        }
-
-        async function resetLogs() {
-            if(!confirm("Restore history?")) return;
-            const { error } = await sb.from('hidden_logs').delete().eq('username', user.username);
-            if(!error) { userHiddenLogs = []; refresh(); alert("Logs Restored."); }
-        }
     </script>
 </body>
 </html>
+
 
 
 
