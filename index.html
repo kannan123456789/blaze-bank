@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLAZE BANK | Terminal v4.1</title>
+    <title>BLAZE BANK | Secure Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -29,7 +29,7 @@
 
     <div id="login-screen" class="max-w-md mx-auto mt-20 p-10 glass rounded-[2rem] text-center border-orange-500/20 border-t-4">
         <h1 class="text-4xl font-black blaze-orange mb-1 italic tracking-tighter">BLAZE BANK</h1>
-        <p class="text-[10px] text-zinc-500 mb-8 tracking-[0.4em]">ENCRYPTED ACCESS ONLY</p>
+        <p class="text-[10px] text-zinc-500 mb-8 tracking-[0.4em]">Secure Terminal</p>
         <input id="u" type="text" placeholder="ID" class="w-full p-4 mb-4 rounded-xl">
         <input id="p" type="password" placeholder="KEY" class="w-full p-4 mb-8 rounded-xl">
         <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase tracking-widest hover:brightness-125 transition-all">Connect</button>
@@ -41,11 +41,11 @@
             <div class="glass p-6 rounded-3xl border-t-2 border-orange-600/50">
                 <div class="flex justify-between items-center mb-4">
                     <span id="user-display" class="text-xs font-bold blaze-orange">@USER</span>
-                    <button onclick="location.reload()" class="text-[9px] text-zinc-600 hover:text-white">SHUTDOWN</button>
+                    <button onclick="location.reload()" class="text-[9px] text-zinc-600 hover:text-white">LOGOUT</button>
                 </div>
-                <p class="text-[9px] text-zinc-500 uppercase tracking-widest">Available Yazo</p>
+                <p class="text-[9px] text-zinc-500 uppercase tracking-widest">Balance</p>
                 <div class="text-5xl font-black italic my-2"><span id="bal">0</span></div>
-                <button onclick="openAI(event)" class="w-full mt-4 bg-zinc-900 border border-zinc-800 py-3 rounded-xl text-[10px] font-bold hover:border-orange-500 transition-colors">✨ ASK TERMINAL AI</button>
+                <button onclick="openAI(event)" class="w-full mt-4 bg-zinc-900 border border-zinc-800 py-3 rounded-xl text-[10px] font-bold hover:border-orange-500 transition-colors uppercase">✨ Ask Blaze AI</button>
             </div>
 
             <div class="glass p-6 rounded-3xl">
@@ -53,9 +53,14 @@
                 <div class="space-y-2">
                     <input id="target" type="text" placeholder="Recipient" class="w-full p-3 rounded-xl text-xs">
                     <input id="amt" type="number" placeholder="Amount" class="w-full p-3 rounded-xl text-xs">
-                    <input id="note" type="text" placeholder="Memo (optional)" class="w-full p-3 rounded-xl text-xs">
-                    <button onclick="send()" class="w-full py-3 blaze-bg text-black font-black rounded-xl text-xs mt-2">AUTHORIZE</button>
+                    <input id="note" type="text" placeholder="Private Memo" class="w-full p-3 rounded-xl text-xs">
+                    <button onclick="send()" class="w-full py-3 blaze-bg text-black font-black rounded-xl text-xs mt-2 uppercase">Authorize</button>
                 </div>
+            </div>
+
+            <div id="admin-panel" class="hidden glass p-4 rounded-3xl border border-dashed border-orange-600/50">
+                <button onclick="addYazos(10000)" class="w-full py-2 bg-orange-600 text-black font-black rounded-lg text-[9px] uppercase mb-2">Mint 10k YZ</button>
+                <button onclick="toggleFreeze()" class="w-full py-2 bg-zinc-800 text-white font-black rounded-lg text-[9px] uppercase">Freeze User</button>
             </div>
         </div>
 
@@ -65,41 +70,43 @@
                     <button id="mode-global" onclick="setChatMode('global')" class="px-6 py-2 text-[10px] font-black rounded-lg bg-orange-500 text-black transition-all">GLOBAL</button>
                     <button id="mode-private" onclick="setChatMode('private')" class="px-6 py-2 text-[10px] font-black rounded-lg text-zinc-500 transition-all">INBOX</button>
                 </div>
-                <input id="dm-target" type="text" placeholder="To: User..." class="hidden w-32 p-2 rounded-lg text-[10px]">
+                <input id="dm-target" type="text" placeholder="User ID..." class="hidden w-32 p-2 rounded-lg text-[10px] glass">
             </div>
 
-            <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll">
-                </div>
+            <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll"></div>
 
             <div class="p-4 bg-black/40 border-t border-zinc-800 flex gap-2">
-                <input id="chat-input" type="text" placeholder="Enter command or message..." class="flex-1 p-4 rounded-2xl text-xs">
-                <button onclick="handleSendMessage()" class="p-4 blaze-bg text-black rounded-2xl font-black">SEND</button>
+                <input id="chat-input" type="text" placeholder="Type message..." class="flex-1 p-4 rounded-2xl text-xs">
+                <button onclick="handleSendMessage()" class="p-4 blaze-bg text-black rounded-2xl font-black uppercase">Send</button>
             </div>
         </div>
 
         <div class="lg:col-span-3 space-y-6">
-            <div class="glass p-6 rounded-3xl h-[350px] flex flex-col">
-                <h3 class="text-[10px] font-bold mb-4 uppercase tracking-widest text-zinc-500">Active Directory</h3>
-                <div id="user-list" class="space-y-2 overflow-y-auto flex-1 chat-scroll">
-                    </div>
+            <div class="glass p-6 rounded-3xl h-[250px] flex flex-col">
+                <h3 class="text-[10px] font-bold mb-4 uppercase tracking-widest text-zinc-500">Network Directory</h3>
+                <div id="user-list" class="space-y-2 overflow-y-auto flex-1 chat-scroll"></div>
             </div>
 
-            <div class="glass p-6 rounded-3xl h-[375px] flex flex-col">
-                <h3 class="text-[10px] font-bold mb-4 uppercase tracking-widest text-zinc-500">Activity Logs</h3>
-                <div id="feed" class="space-y-3 overflow-y-auto flex-1 chat-scroll text-[10px]">
+            <div class="glass p-6 rounded-3xl h-[475px] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Transaction Logs</h3>
+                    <div class="flex gap-2">
+                        <button onclick="hideAllLogs()" class="text-[8px] text-zinc-600 hover:text-orange-500 font-bold uppercase">Hide All</button>
+                        <button onclick="resetLogs()" class="text-[8px] text-orange-500 hover:text-white font-bold uppercase">Reset</button>
                     </div>
+                </div>
+                <div id="feed" class="space-y-2 overflow-y-auto flex-1 chat-scroll text-[10px]"></div>
             </div>
         </div>
     </div>
 
-    <button onclick="toggleHelp(true)" class="fixed bottom-8 right-8 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-xs uppercase tracking-widest shadow-2xl hover:scale-105 transition-all z-50">
+    <button onclick="toggleHelp(true)" class="fixed bottom-8 right-8 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl hover:brightness-110 transition-all z-50">
         Report to Sabaris
     </button>
 
     <div id="help-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="glass max-w-md w-full p-8 rounded-[2rem] border-blue-500/30">
-            <h2 class="text-xl font-black text-blue-500 mb-2 italic uppercase">System Report</h2>
-            <p class="text-[10px] text-zinc-500 mb-6">DIRECT ENCRYPTED LINE TO ADMIN</p>
+            <h2 class="text-xl font-black text-blue-500 mb-2 italic uppercase">Support Ticket</h2>
             <textarea id="help-msg" placeholder="Describe your issue..." class="w-full h-40 bg-black border border-zinc-800 p-4 rounded-2xl text-sm text-white focus:border-blue-500 outline-none"></textarea>
             <div class="flex gap-4 mt-6">
                 <button onclick="submitHelp()" class="flex-1 py-4 bg-blue-600 text-white font-black rounded-xl text-xs uppercase">Submit</button>
@@ -116,24 +123,31 @@
 
         let user = null;
         let currentChatMode = 'global';
+        let userHiddenLogs = [];
 
         async function auth() {
             const uInput = document.getElementById('u').value.trim();
             const pInput = document.getElementById('p').value;
             let { data: acc } = await sb.from('profiles').select('*').eq('username', uInput).single();
             if (acc && acc.password === pInput) start(acc);
-            else if (!acc && confirm("Create new secure identity?")) {
+            else if (!acc && confirm("Register new ID?")) {
                 const { data: n } = await sb.from('profiles').insert([{username:uInput, password:pInput, balance:500, is_frozen: false}]).select().single();
                 start(n);
-            } else alert("ACCESS DENIED");
+            } else alert("INVALID KEY");
         }
 
         async function start(acc) {
             user = acc;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('grid');
             document.getElementById('user-display').innerText = `@${user.username}`;
+            if(user.username === 'Sabaris') document.getElementById('admin-panel').classList.remove('hidden');
             
+            // Load Hidden Logs
+            const { data } = await sb.from('hidden_logs').select('transaction_id').eq('username', user.username);
+            userHiddenLogs = data ? data.map(i => i.transaction_id) : [];
+
             refresh();
             setInterval(heartbeat, 5000);
             setInterval(refresh, 4000);
@@ -156,101 +170,115 @@
             if(!me) return;
             document.getElementById('bal').innerText = me.balance.toLocaleString();
 
-            // Directory & Status Fix
+            // Directory & Status Dots
             const { data: users } = await sb.from('profiles').select('username, last_seen');
             const now = new Date();
             document.getElementById('user-list').innerHTML = users.map(u => {
-                const lastSeen = new Date(u.last_seen);
-                // If last seen was less than 30 seconds ago, they are online
-                const isOnline = (now - lastSeen) < 30000;
-                return `
-                    <div onclick="startDM('${u.username}')" class="flex items-center justify-between p-2 bg-black/20 rounded-xl border border-zinc-900 cursor-pointer hover:border-zinc-600 transition">
-                        <span class="text-xs">@${u.username}</span>
-                        <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
-                    </div>
-                `;
+                const isOnline = (now - new Date(u.last_seen)) < 30000;
+                return `<div onclick="startDM('${u.username}')" class="flex items-center justify-between p-2 bg-black/40 rounded-xl border border-zinc-900 cursor-pointer hover:border-zinc-700">
+                    <span class="text-[10px]">@${u.username}</span>
+                    <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
+                </div>`;
             }).join('');
 
+            // Private Transactions Log (Only sender and receiver)
             const { data: logs } = await sb.from('transactions').select('*').order('created_at', { ascending: false });
             if(!logs) return;
 
-            // Activity Logs (Feed)
-            const feedLogs = logs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username));
-            document.getElementById('feed').innerHTML = feedLogs.map(t => `
-                <div class="p-2 border-b border-zinc-900 text-zinc-400">
-                    <span class="text-white">${t.sender === user.username ? '-' : '+'}${t.amount}YZ</span> 
-                    ${t.sender === user.username ? 'to ' + t.receiver : 'from ' + t.sender}
+            const myPrivateLogs = logs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !userHiddenLogs.includes(t.id));
+            document.getElementById('feed').innerHTML = myPrivateLogs.map(t => `
+                <div class="p-2 border-b border-zinc-900 flex justify-between items-center group">
+                    <span class="text-zinc-400">
+                        <b class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'}">${t.sender === user.username ? '-' : '+'}${t.amount}</b> 
+                        to ${t.receiver}
+                    </span>
+                    <button onclick="hideLogAccount(${t.id})" class="text-zinc-800 group-hover:text-red-500 transition">✕</button>
                 </div>
             `).join('');
 
-            // Chat Messages
-            let chatFiltered;
-            if(currentChatMode === 'global') {
-                chatFiltered = logs.filter(t => t.receiver === 'GLOBAL_CHAT');
-            } else {
-                chatFiltered = logs.filter(t => t.amount === 0 && (t.sender === user.username || t.receiver === user.username) && t.receiver !== 'GLOBAL_CHAT');
-            }
+            // Chat Logic
+            let chatFiltered = currentChatMode === 'global' ? 
+                logs.filter(t => t.receiver === 'GLOBAL_CHAT') : 
+                logs.filter(t => t.amount === 0 && (t.sender === user.username || t.receiver === user.username) && t.receiver !== 'GLOBAL_CHAT');
 
             document.getElementById('chat-box').innerHTML = chatFiltered.reverse().map(m => `
                 <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : (m.sender === 'Sabaris' ? 'msg-sabaris' : 'msg-them')}">
-                    <div class="flex justify-between items-center mb-1">
-                        <b class="text-[8px] uppercase opacity-50">${m.sender}</b>
-                        ${currentChatMode === 'private' && m.sender === user.username ? `<span class="text-[8px] opacity-40">→ ${m.receiver}</span>` : ''}
-                    </div>
+                    <b class="text-[8px] opacity-40 block mb-1">${m.sender} ${currentChatMode === 'private' ? '→ ' + m.receiver : ''}</b>
                     ${m.note}
                 </div>
             `).join('');
-            
-            const box = document.getElementById('chat-box');
-            box.scrollTop = box.scrollHeight;
+            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
         }
 
-        function startDM(name) {
-            if(name === user.username) return;
-            setChatMode('private');
-            document.getElementById('dm-target').value = name;
+        // --- PRIVACY ACTIONS ---
+        async function hideLogAccount(id) {
+            await sb.from('hidden_logs').insert([{ username: user.username, transaction_id: id }]);
+            userHiddenLogs.push(id);
+            refresh();
         }
 
+        async function hideAllLogs() {
+            if(!confirm("Hide all visible logs?")) return;
+            const { data: logs } = await sb.from('transactions').select('id').or(`sender.eq.${user.username},receiver.eq.${user.username}`);
+            for(let log of logs) {
+                if(!userHiddenLogs.includes(log.id)) {
+                    await sb.from('hidden_logs').insert([{ username: user.username, transaction_id: log.id }]);
+                    userHiddenLogs.push(log.id);
+                }
+            }
+            refresh();
+        }
+
+        async function resetLogs() {
+            if(!confirm("Restore all hidden logs?")) return;
+            await sb.from('hidden_logs').delete().eq('username', user.username);
+            userHiddenLogs = [];
+            refresh();
+        }
+
+        // --- SYSTEM ACTIONS ---
+        function startDM(name) { if(name !== user.username) { setChatMode('private'); document.getElementById('dm-target').value = name; } }
+        
         async function handleSendMessage() {
             const inp = document.getElementById('chat-input');
             const msg = inp.value.trim();
             if(!msg) return;
-
             if(currentChatMode === 'global') {
                 await sb.from('transactions').insert([{ sender: user.username, receiver: 'GLOBAL_CHAT', amount: 0, note: msg }]);
             } else {
                 const target = document.getElementById('dm-target').value.trim();
-                if(!target) return alert("Select recipient from directory or type their name.");
+                if(!target) return alert("Select a recipient first");
                 await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: msg }]);
             }
-            inp.value = "";
-            refresh();
+            inp.value = ""; refresh();
         }
 
         async function openAI(event) {
-            const q = (prompt("Terminal AI Query:") || "").toLowerCase().trim();
-            if(!q) return;
-
-            const fast = {
-                "blaze": "BLAZE TEAM: Best, Loving, Armed, Zesty, Excellent.",
-                "zvp": "ZVP Protocol is classified.",
-                "card": "To get a D-Card/Debit Card, send a System Report to Sabaris.",
-                "debit": "To get a D-Card/Debit Card, send a System Report to Sabaris."
-            };
+            const q = (prompt(" Blaze AI Query:") || "").toLowerCase();
+            const fast = { "blaze": "Best, Loving, Armed, Zesty, Excellent.", "zvp": "ZVP Protocol is private.", "card": "Contact Sabaris.", "debit": "Contact Sabaris." };
             for(let k in fast) if(q.includes(k)) return alert("INSTANT: " + fast[k]);
-
-            const btn = event.currentTarget;
-            btn.innerText = "QUERYING...";
+            const btn = event.currentTarget; btn.innerText = "THINKING...";
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] })
                 });
-                const d = await res.json();
-                alert("BLAZE AI: " + d.candidates[0].content.parts[0].text);
-            } catch(e) { alert("Sync Error."); }
-            finally { btn.innerText = "✨ ASK TERMINAL AI"; }
+                const d = await res.json(); alert("AI: " + d.candidates[0].content.parts[0].text);
+            } catch(e) { alert("Error"); } finally { btn.innerText = "✨ Ask Blaze AI"; }
+        }
+
+        async function send() {
+            const t = document.getElementById('target').value.trim();
+            const a = parseInt(document.getElementById('amt').value);
+            const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
+            if(me.balance >= a && a > 0) {
+                const { data: them } = await sb.from('profiles').select('balance').eq('username', t).single();
+                if(!them) return alert("User not found.");
+                await sb.from('profiles').update({ balance: me.balance - a }).eq('username', user.username);
+                await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
+                await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: document.getElementById('note').value }]);
+                document.getElementById('target').value = ""; document.getElementById('amt').value = ""; refresh();
+            } else alert("Invalid funds.");
         }
 
         function toggleHelp(s) { document.getElementById('help-modal').classList.toggle('hidden', !s); }
@@ -258,26 +286,13 @@
             const msg = document.getElementById('help-msg').value.trim();
             if(!msg) return;
             await sb.from('transactions').insert([{ sender: user.username, receiver: 'Sabaris', amount: 0, note: `[SYSTEM REPORT]: ${msg}` }]);
-            document.getElementById('help-msg').value = "";
-            toggleHelp(false);
-            alert("Report sent.");
-            refresh();
+            toggleHelp(false); alert("Sent."); refresh();
         }
 
-        async function send() {
-            const t = document.getElementById('target').value.trim();
-            const a = parseInt(document.getElementById('amt').value);
-            const n = document.getElementById('note').value;
+        async function addYazos(amt) {
             const { data: me } = await sb.from('profiles').select('balance').eq('username', user.username).single();
-            if(me.balance >= a && a > 0) {
-                const { data: them } = await sb.from('profiles').select('balance').eq('username', t).single();
-                if(!them) return alert("User not found.");
-                await sb.from('profiles').update({ balance: me.balance - a }).eq('username', user.username);
-                await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
-                await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: n }]);
-                document.getElementById('target').value = ""; document.getElementById('amt').value = "";
-                refresh();
-            } else alert("Invalid funds.");
+            await sb.from('profiles').update({ balance: me.balance + amt }).eq('username', user.username);
+            refresh();
         }
     </script>
 </body>
