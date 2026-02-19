@@ -3,112 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLAZE BANK | SABARIS ADMIN</title>
+    <title>BLAZE BANK | OS v6.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         body { background: #000; color: #eee; font-family: 'JetBrains+Mono', monospace; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .glass { background: rgba(15, 15, 15, 0.9); backdrop-filter: blur(12px); border: 1px solid #222; }
+        .glass { background: rgba(12, 12, 12, 0.98); backdrop-filter: blur(15px); border: 1px solid #222; }
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background: #ff5f00; }
         
-        /* Fixed App Container */
-        #dashboard { width: 1000px; height: 700px; display: flex; flex-direction: column; }
+        #dashboard { width: 1100px; height: 750px; display: none; flex-direction: column; border: 1px solid #333; }
+        
+        /* WhatsApp-style Fixed Scroll */
+        .chat-container { height: 480px; overflow-y: auto; scroll-behavior: smooth; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 
-        /* Scrollable Area Fix */
-        .chat-container { height: 400px; overflow-y: auto; display: flex; flex-direction: column; padding: 15px; }
-        .chat-container::-webkit-scrollbar { width: 4px; }
-        .chat-container::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
         .online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
         .offline { background: #3f3f46; }
         
-        .tab-btn { padding: 12px; font-size: 10px; font-weight: 900; color: #555; border-bottom: 2px solid transparent; flex: 1; transition: 0.3s; }
+        .tab-btn { padding: 14px; font-size: 11px; font-weight: 900; color: #444; border-bottom: 2px solid transparent; flex: 1; transition: 0.2s; }
         .tab-btn.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; background: rgba(255,95,0,0.05); }
         
-        .msg-bubble { padding: 8px 12px; border-radius: 12px; font-size: 11px; max-width: 80%; border: 1px solid #222; margin-bottom: 8px; position: relative; }
-        .msg-me { border-right: 3px solid #ff5f00; margin-left: auto; background: #0a0a0a; }
-        .msg-them { border-left: 3px solid #444; background: #111; }
+        .msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 11px; max-width: 75%; border: 1px solid #222; margin-bottom: 10px; }
+        .msg-me { border-right: 4px solid #ff5f00; margin-left: auto; background: #080808; }
+        .msg-them { border-left: 4px solid #333; background: #151515; }
         
         .hidden-tab { display: none !important; }
-        .frozen { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+        .frozen { opacity: 0.3; pointer-events: none; filter: blur(2px); }
     </style>
 </head>
 <body>
 
-    <div id="login-screen" class="max-w-md w-full p-10 glass rounded-[2rem] text-center border-t-4 border-orange-600 shadow-2xl">
+    <div id="login-screen" class="max-w-md w-full p-10 glass rounded-[2rem] text-center border-t-2 border-orange-600 shadow-2xl">
         <h1 class="text-4xl font-black blaze-orange mb-1 italic tracking-tighter">BLAZE BANK</h1>
-        <p class="text-[9px] text-zinc-600 mb-8 tracking-[0.5em]">ROOT ACCESS v5.9</p>
+        <p class="text-[9px] text-zinc-700 mb-8 tracking-[0.5em]">SYSTEM v6.0 ONLINE</p>
         <input id="u" type="text" placeholder="USER ID" class="w-full p-4 mb-4 rounded-xl bg-black border border-zinc-800 text-white outline-none">
         <input id="p" type="password" placeholder="SECURE KEY" class="w-full p-4 mb-8 rounded-xl bg-black border border-zinc-800 text-white outline-none">
-        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase hover:opacity-80 transition">Connect</button>
+        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase hover:scale-[0.98] transition">AUTHENTICATE</button>
     </div>
 
-    <div id="dashboard" class="hidden glass rounded-[2rem] shadow-2xl overflow-hidden p-6">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-4">
-                <span id="user-display" class="text-sm font-black blaze-orange uppercase"></span>
-                <span id="admin-badge" class="hidden text-[8px] bg-red-600 text-white px-2 py-0.5 rounded font-bold">ADMIN ACCESS</span>
+    <div id="dashboard" class="glass rounded-[2rem] shadow-2xl overflow-hidden p-6">
+        <div class="flex justify-between items-center mb-6 px-2">
+            <div class="flex items-center gap-3">
+                <span id="user-display" class="text-xs font-black blaze-orange uppercase tracking-widest"></span>
+                <span id="admin-badge" class="hidden text-[7px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">ROOT</span>
             </div>
-            <button onclick="location.reload()" class="text-[10px] font-bold text-zinc-600 hover:text-white">DISCONNECT</button>
+            <div class="flex gap-4 items-center">
+                <button onclick="location.reload()" class="text-[9px] font-bold text-zinc-600 hover:text-red-500">DISCONNECT</button>
+            </div>
         </div>
 
-        <div class="flex border-b border-zinc-900 mb-6">
-            <button onclick="switchTab('bank')" id="tab-bank" class="tab-btn active">BANK</button>
+        <div class="flex border-b border-zinc-900 mb-6 bg-black/20">
+            <button onclick="switchTab('bank')" id="tab-bank" class="tab-btn active">BANKING</button>
             <button onclick="switchTab('comms')" id="tab-comms" class="tab-btn">COMMS</button>
-            <button onclick="switchTab('admin')" id="tab-admin" class="tab-btn hidden">ADMIN PANEL</button>
+            <button onclick="switchTab('logs')" id="tab-logs" class="tab-btn">SECURE LOGS</button>
+            <button onclick="switchTab('admin')" id="tab-admin" class="tab-btn hidden">SABARIS COMMAND</button>
         </div>
 
-        <div class="flex-1 overflow-hidden" id="main-content">
-            <div id="content-bank" class="h-full flex gap-6">
-                <div class="flex-1 space-y-6">
-                    <div class="glass p-10 rounded-3xl text-center">
-                        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">Available Balance</p>
-                        <div class="text-6xl font-black italic"><span id="bal">0</span><span class="text-lg blaze-orange ml-2">YZ</span></div>
+        <div class="flex flex-1 gap-6 overflow-hidden" id="main-content">
+            
+            <div class="flex-1 overflow-hidden">
+                <div id="content-bank" class="h-full flex flex-col gap-6">
+                    <div class="glass p-10 rounded-3xl text-center border-orange-500/10">
+                        <p class="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Vault Balance</p>
+                        <div class="text-7xl font-black italic tracking-tighter"><span id="bal">0</span><span class="text-lg blaze-orange ml-2">YZ</span></div>
                     </div>
                     <div class="glass p-6 rounded-3xl space-y-3">
-                        <input id="target" type="text" placeholder="Recipient" class="w-full p-3 rounded-xl bg-black border border-zinc-800 text-xs">
-                        <input id="amt" type="number" placeholder="Amount" class="w-full p-3 rounded-xl bg-black border border-zinc-800 text-xs">
-                        <button onclick="send()" class="w-full py-4 blaze-bg text-black font-black rounded-xl text-xs uppercase">Confirm Transfer</button>
+                        <input id="target" type="text" placeholder="Recipient ID" class="w-full p-4 rounded-xl bg-black border border-zinc-800 text-xs text-white">
+                        <input id="amt" type="number" placeholder="YZ Amount" class="w-full p-4 rounded-xl bg-black border border-zinc-800 text-xs text-white">
+                        <button onclick="send()" class="w-full py-4 blaze-bg text-black font-black rounded-xl text-xs uppercase">EXECUTE TRANSFER</button>
                     </div>
                 </div>
-                <div class="w-64 glass p-4 rounded-3xl flex flex-col border-zinc-800">
-                    <p class="text-[9px] font-bold mb-4 text-zinc-500 uppercase text-center">User Directory</p>
-                    <div id="user-list-bank" class="space-y-2 overflow-y-auto pr-1"></div>
-                </div>
-            </div>
 
-            <div id="content-comms" class="hidden-tab h-full flex gap-6">
-                <div class="flex-1 glass rounded-3xl flex flex-col overflow-hidden">
-                    <div class="p-3 border-b border-zinc-800 flex justify-between bg-black/40">
-                        <div class="flex bg-zinc-950 p-1 rounded-xl gap-1">
-                            <button id="mode-global" onclick="setChatMode('global')" class="px-4 py-1.5 text-[9px] font-black rounded-lg bg-orange-500 text-black">GLOBAL</button>
-                            <button id="mode-private" onclick="setChatMode('private')" class="px-4 py-1.5 text-[9px] font-black rounded-lg text-zinc-500">PRIVATE</button>
+                <div id="content-comms" class="hidden-tab h-full flex flex-col glass rounded-3xl overflow-hidden">
+                    <div class="p-3 border-b border-zinc-800 flex justify-between bg-black/40 items-center">
+                        <div class="flex bg-zinc-900 p-1 rounded-xl">
+                            <button id="mode-global" onclick="setChatMode('global')" class="px-4 py-2 text-[9px] font-black rounded-lg bg-orange-500 text-black">GLOBAL</button>
+                            <button id="mode-private" onclick="setChatMode('private')" class="px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500">PRIVATE</button>
                         </div>
-                        <button onclick="resetChatLogs()" class="px-4 text-[9px] font-bold text-zinc-600 hover:text-white">CLEAR LOCAL</button>
+                        <div class="flex gap-2">
+                            <button onclick="resetChatLogs()" class="px-3 py-2 text-[9px] font-bold text-zinc-500 hover:text-white uppercase">Reset</button>
+                            <button onclick="alert('Contact Sabaris for System Access.')" class="px-3 py-2 text-[9px] font-bold bg-blue-700 text-white rounded-lg uppercase">HELP</button>
+                        </div>
                     </div>
-                    <div id="chat-box" class="chat-container"></div>
-                    <div class="p-4 bg-black/40 border-t border-zinc-800 flex gap-2">
-                        <input id="chat-input" type="text" placeholder="Type message..." class="flex-1 p-3 bg-black border border-zinc-800 rounded-xl text-xs">
-                        <button onclick="handleSendMessage()" class="px-8 blaze-bg text-black rounded-xl font-black text-xs uppercase">Send</button>
+                    <div id="chat-box" class="chat-container custom-scroll p-4"></div>
+                    <div class="p-4 border-t border-zinc-800 flex gap-2 bg-black/20">
+                        <input id="chat-input" type="text" placeholder="Write message..." class="flex-1 p-3 bg-black border border-zinc-800 rounded-xl text-xs text-white">
+                        <button onclick="handleSendMessage()" class="px-8 blaze-bg text-black rounded-xl font-black text-xs">SEND</button>
+                    </div>
+                </div>
+
+                <div id="content-logs" class="hidden-tab h-full flex flex-col gap-4 overflow-y-auto custom-scroll pr-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-black text-zinc-500 uppercase">Private Ledger</h3>
+                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 underline">RESTORE HIDDEN</button>
+                    </div>
+                    <div id="feed" class="space-y-2"></div>
+                </div>
+
+                <div id="content-admin" class="hidden-tab h-full flex flex-col gap-4 overflow-y-auto custom-scroll">
+                    <div class="grid grid-cols-2 gap-4 h-full">
+                        <div class="glass p-6 rounded-3xl overflow-y-auto custom-scroll">
+                            <h3 class="text-red-600 text-[10px] font-black mb-4 uppercase">User Control</h3>
+                            <div id="admin-user-list" class="space-y-3"></div>
+                        </div>
+                        <div class="glass p-6 rounded-3xl overflow-y-auto custom-scroll">
+                            <h3 class="text-red-600 text-[10px] font-black mb-4 uppercase">Network Traffic</h3>
+                            <div id="admin-tx-list" class="space-y-2"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="content-admin" class="hidden-tab h-full flex flex-col gap-4 overflow-y-auto pr-2">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="glass p-6 rounded-3xl">
-                        <h3 class="text-orange-500 text-xs font-black mb-4 uppercase">User Management</h3>
-                        <div id="admin-user-list" class="space-y-3"></div>
-                    </div>
-                    <div class="glass p-6 rounded-3xl">
-                        <h3 class="text-orange-500 text-xs font-black mb-4 uppercase">Global Logs</h3>
-                        <div id="admin-tx-list" class="text-[10px] space-y-2"></div>
-                    </div>
-                </div>
+            <div id="network-directory" class="w-64 glass rounded-3xl p-4 flex flex-col border-zinc-800">
+                <p class="text-[9px] font-black mb-4 text-zinc-600 uppercase text-center tracking-widest border-b border-zinc-900 pb-2">Network Directory</p>
+                <div id="user-list-global" class="space-y-2 overflow-y-auto custom-scroll flex-1"></div>
             </div>
+
         </div>
     </div>
 
@@ -121,19 +135,20 @@
         let currentChatMode = 'global';
         let privateTarget = '';
         let hiddenMessages = JSON.parse(localStorage.getItem('blaze_hidden_msgs') || '[]');
+        let hiddenBankLogs = JSON.parse(localStorage.getItem('blaze_hidden_logs') || '[]');
 
         async function auth() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value;
             let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
             if (acc && acc.password === p) start(acc);
-            else alert("DENIED");
+            else alert("KEY REJECTED");
         }
 
         async function start(acc) {
             user = acc;
             document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('dashboard').style.display = 'flex';
             document.getElementById('user-display').innerText = `@${user.username}`;
             
             if (user.username === 'Sabaris') {
@@ -149,28 +164,36 @@
             refresh();
         }
 
+        function switchTab(tabId) {
+            ['bank', 'comms', 'logs', 'admin'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.toggle('hidden-tab', t !== tabId);
+                document.getElementById(`tab-${t}`).classList.toggle('active', t === tabId);
+            });
+        }
+
         async function refresh() {
             if(!user) return;
             const { data: allUsers } = await sb.from('profiles').select('*');
             const me = allUsers.find(u => u.username === user.username);
             document.getElementById('bal').innerText = me.balance.toLocaleString();
             
-            // Check Freeze Status
             if(me.is_frozen) document.getElementById('main-content').classList.add('frozen');
+            else document.getElementById('main-content').classList.remove('frozen');
 
-            // Render Directory
-            const dirHTML = allUsers.map(u => {
-                const isOnline = (new Date() - new Date(u.last_seen)) / 1000 < 20;
-                return `<div onclick="clickUser('${u.username}')" class="flex items-center justify-between p-2 glass rounded-lg cursor-pointer hover:border-orange-500 mb-1">
-                    <span class="text-[10px] font-bold ${u.is_frozen ? 'line-through text-red-800' : ''}">@${u.username}</span>
+            // Directory Update
+            document.getElementById('user-list-global').innerHTML = allUsers.map(u => {
+                const isOnline = (new Date() - new Date(u.last_seen)) / 1000 < 25;
+                return `<div onclick="clickUser('${u.username}')" class="flex items-center p-2 glass rounded-xl cursor-pointer hover:border-orange-500 mb-1 transition">
                     <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
+                    <span class="text-[10px] font-bold uppercase ${u.is_frozen ? 'text-red-800' : ''}">${u.username}</span>
                 </div>`;
             }).join('');
-            document.getElementById('user-list-bank').innerHTML = dirHTML;
 
-            // Render Chat
-            const { data: allLogs } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
-            const msgs = allLogs.filter(t => t.amount === 0 && !hiddenMessages.includes(t.id));
+            // Data Fetch
+            const { data: allTransactions } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
+            
+            // 1. WhatsApp-Style Chat
+            const msgs = allTransactions.filter(t => t.amount === 0 && !hiddenMessages.includes(t.id));
             let chatF = (currentChatMode === 'global') ? 
                 msgs.filter(t => t.receiver === 'GLOBAL_CHAT') : 
                 msgs.filter(t => (t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username));
@@ -178,52 +201,56 @@
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML = chatF.map(m => `
                 <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : 'msg-them'} group">
-                    <b class="text-[7px] opacity-40 block uppercase">${m.sender}</b>
+                    <b class="text-[7px] opacity-30 block uppercase mb-1">${m.sender}</b>
                     ${m.note}
-                    <div class="hidden group-hover:flex gap-3 mt-1 pt-1 border-t border-white/5">
-                        <button onclick="deleteMsg(${m.id}, 'me')" class="text-[7px] text-zinc-500 uppercase font-bold">Hide</button>
-                        ${(m.sender === user.username || user.username === 'Sabaris') ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[7px] text-red-500 uppercase font-bold">Delete Global</button>` : ''}
+                    <div class="hidden group-hover:flex gap-3 mt-2 border-t border-white/5 pt-1">
+                        <button onclick="deleteMsg(${m.id}, 'me')" class="text-[7px] text-zinc-600 hover:text-white uppercase">Hide</button>
+                        ${(m.sender === user.username || user.username === 'Sabaris') ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[7px] text-red-600 uppercase font-black">Wipe</button>` : ''}
                     </div>
                 </div>
             `).join('');
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Admin Logic
+            // 2. Private Transaction Logs (Sender & Receiver Only)
+            const myPrivateLogs = allTransactions.filter(t => 
+                t.amount > 0 && 
+                (t.sender === user.username || t.receiver === user.username) && 
+                !hiddenBankLogs.includes(t.id)
+            ).reverse();
+
+            document.getElementById('feed').innerHTML = myPrivateLogs.map(t => `
+                <div class="p-3 bg-zinc-950/40 rounded-xl border border-zinc-900 flex justify-between items-center text-[10px]">
+                    <span>
+                        <b class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</b>
+                        <span class="text-zinc-600 ml-2">${t.sender === user.username ? 'TO @' + t.receiver : 'FROM @' + t.sender}</span>
+                    </span>
+                    <button onclick="hideSingleLog(${t.id})" class="text-zinc-800 hover:text-white">✕</button>
+                </div>
+            `).join('');
+
+            // 3. Admin Panel Update
             if(user.username === 'Sabaris') {
                 document.getElementById('admin-user-list').innerHTML = allUsers.map(u => `
-                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl text-[10px]">
-                        <span><b>@${u.username}</b> (${u.balance} YZ)</span>
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl text-[9px]">
+                        <span><b>${u.username}</b> | ${u.balance} YZ</span>
                         <div class="flex gap-2">
-                            <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600 px-2 py-1 rounded text-white">+10k</button>
-                            <button onclick="adminAction('${u.username}', 'freeze')" class="${u.is_frozen ? 'bg-orange-600' : 'bg-red-600'} px-2 py-1 rounded text-white">${u.is_frozen ? 'Unfreeze' : 'Freeze'}</button>
+                            <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600 text-white px-2 py-1 rounded">ADD 10K</button>
+                            <button onclick="adminAction('${u.username}', 'freeze')" class="${u.is_frozen ? 'bg-orange-600' : 'bg-red-600'} text-white px-2 py-1 rounded">${u.is_frozen ? 'UNFREEZE' : 'FREEZE'}</button>
                         </div>
                     </div>
                 `).join('');
-                document.getElementById('admin-tx-list').innerHTML = allLogs.filter(t => t.amount > 0).reverse().slice(0, 20).map(t => `
-                    <div class="border-b border-white/5 pb-1">
-                        <span class="text-orange-500">${t.sender}</span> → <span class="text-blue-500">${t.receiver}</span>: <b>${t.amount} YZ</b>
+                document.getElementById('admin-tx-list').innerHTML = allTransactions.filter(t => t.amount > 0).reverse().slice(0, 15).map(t => `
+                    <div class="text-[9px] border-b border-white/5 pb-1 text-zinc-500 italic">
+                        [${t.sender}] → [${t.receiver}] | ${t.amount} YZ
                     </div>
                 `).join('');
             }
         }
 
-        async function adminAction(targetUser, action) {
-            if(action === 'grant') {
-                const { data } = await sb.from('profiles').select('balance').eq('username', targetUser).single();
-                await sb.from('profiles').update({ balance: data.balance + 10000 }).eq('username', targetUser);
-            } else if (action === 'freeze') {
-                const { data } = await sb.from('profiles').select('is_frozen').eq('username', targetUser).single();
-                await sb.from('profiles').update({ is_frozen: !data.is_frozen }).eq('username', targetUser);
-            }
-            refresh();
-        }
-
-        function switchTab(tabId) {
-            ['bank', 'comms', 'admin'].forEach(t => {
-                document.getElementById(`content-${t}`).classList.toggle('hidden-tab', t !== tabId);
-                document.getElementById(`tab-${t}`).classList.toggle('active', t === tabId);
-            });
-        }
+        // LOGIC FUNCTIONS
+        function hideSingleLog(id) { hiddenBankLogs.push(id); localStorage.setItem('blaze_hidden_logs', JSON.stringify(hiddenBankLogs)); refresh(); }
+        function resetLogs() { hiddenBankLogs = []; localStorage.setItem('blaze_hidden_logs', JSON.stringify([])); refresh(); }
+        function resetChatLogs() { hiddenMessages = []; localStorage.setItem('blaze_hidden_msgs', JSON.stringify([])); refresh(); }
 
         async function handleSendMessage() {
             const inp = document.getElementById('chat-input');
@@ -234,43 +261,47 @@
         }
 
         async function deleteMsg(id, mode) {
-            if (mode === 'everyone') { await sb.from('transactions').delete().eq('id', id); }
+            if (mode === 'everyone') { if(confirm("Delete Global?")) await sb.from('transactions').delete().eq('id', id); }
             else { hiddenMessages.push(id); localStorage.setItem('blaze_hidden_msgs', JSON.stringify(hiddenMessages)); }
-            refresh();
-        }
-
-        function resetChatLogs() { hiddenMessages = []; localStorage.setItem('blaze_hidden_msgs', JSON.stringify([])); refresh(); }
-
-        function clickUser(name) {
-            if(name === user.username) return;
-            document.getElementById('target').value = name;
-            setChatMode('private');
-            privateTarget = name;
-            document.getElementById('chat-indicator').innerText = `Chatting with @${name}`;
-            refresh();
-        }
-
-        function setChatMode(mode) {
-            currentChatMode = mode;
-            document.getElementById('mode-global').className = mode === 'global' ? 'px-4 py-1.5 text-[9px] font-black rounded-lg bg-orange-500 text-black' : 'px-4 py-1.5 text-[9px] font-black rounded-lg text-zinc-500';
-            document.getElementById('mode-private').className = mode === 'private' ? 'px-4 py-1.5 text-[9px] font-black rounded-lg bg-blue-500 text-white' : 'px-4 py-1.5 text-[9px] font-black rounded-lg text-zinc-500';
             refresh();
         }
 
         async function send() {
             const t = document.getElementById('target').value.trim();
             const a = parseInt(document.getElementById('amt').value);
-            if(!t || isNaN(a) || a <= 0) return alert("Invalid amount.");
-            const { data: me } = await sb.from('profiles').select('balance, is_frozen').eq('username', user.username).single();
-            if(me.is_frozen) return alert("ACCOUNT FROZEN");
+            if(!t || isNaN(a) || a <= 0) return alert("Invalid Entry");
+            const { data: me } = await sb.from('profiles').select('*').eq('username', user.username).single();
+            if(me.is_frozen) return alert("FREEZE ACTIVE");
             if(me.balance >= a) {
-                const { data: them } = await sb.from('profiles').select('balance').eq('username', t).single();
-                if(!them) return alert("User not found.");
+                const { data: them } = await sb.from('profiles').select('*').eq('username', t).single();
+                if(!them) return alert("Target Not Found");
                 await sb.from('profiles').update({ balance: me.balance - a }).eq('username', user.username);
                 await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
-                await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: "Transfer" }]);
-                alert("YZ Sent."); refresh();
-            } else alert("Insufficient funds.");
+                await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: "Private Transfer" }]);
+                alert("YZ DISPATCHED"); refresh();
+            } else alert("Low Assets");
+        }
+
+        function clickUser(name) {
+            if(name === user.username) return;
+            document.getElementById('target').value = name;
+            setChatMode('private');
+            privateTarget = name;
+            refresh();
+        }
+
+        function setChatMode(mode) {
+            currentChatMode = mode;
+            document.getElementById('mode-global').className = mode === 'global' ? 'px-4 py-2 text-[9px] font-black rounded-lg bg-orange-500 text-black' : 'px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500';
+            document.getElementById('mode-private').className = mode === 'private' ? 'px-4 py-2 text-[9px] font-black rounded-lg bg-blue-600 text-white' : 'px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500';
+            refresh();
+        }
+
+        async function adminAction(targetUser, action) {
+            const { data: uData } = await sb.from('profiles').select('*').eq('username', targetUser).single();
+            if(action === 'grant') await sb.from('profiles').update({ balance: uData.balance + 10000 }).eq('username', targetUser);
+            if(action === 'freeze') await sb.from('profiles').update({ is_frozen: !uData.is_frozen }).eq('username', targetUser);
+            refresh();
         }
     </script>
 </body>
