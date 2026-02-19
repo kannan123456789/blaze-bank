@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLAZE BANK | OS v5.7</title>
+    <title>BLAZE BANK | OS v5.8</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,9 +13,10 @@
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background: #ff5f00; }
         
+        /* FIXED STATUS COLORS */
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px solid #000; transition: 0.3s; }
-        .online { background: #22c55e; box-shadow: 0 0 12px #22c55e; }
-        .offline { background: #3f3f46; }
+        .online { background: #22c55e !important; box-shadow: 0 0 12px #22c55e; }
+        .offline { background: #3f3f46 !important; box-shadow: none; }
         
         .tab-btn { padding: 12px; font-size: 10px; font-weight: 900; letter-spacing: 2px; color: #555; position: relative; border-bottom: 2px solid transparent; }
         .tab-btn.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; background: rgba(255,95,0,0.05); }
@@ -34,7 +35,7 @@
     <div id="login-screen" class="flex-1 flex items-center justify-center p-6">
         <div class="max-w-md w-full p-10 glass rounded-[2rem] text-center border-t-4 border-orange-600 shadow-2xl">
             <h1 class="text-4xl font-black blaze-orange mb-1 italic tracking-tighter">BLAZE BANK</h1>
-            <p class="text-[9px] text-zinc-600 mb-8 tracking-[0.5em]">ENCRYPTED OS v5.7</p>
+            <p class="text-[9px] text-zinc-600 mb-8 tracking-[0.5em]">SYSTEM v5.8 | FULL SYNC</p>
             <input id="u" type="text" placeholder="USER ID" class="w-full p-4 mb-4 rounded-xl">
             <input id="p" type="password" placeholder="SECURE KEY" class="w-full p-4 mb-8 rounded-xl">
             <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase">Connect</button>
@@ -45,7 +46,7 @@
         <div class="flex justify-between items-center mb-4 px-2">
             <div class="flex items-center gap-3">
                 <span id="user-display" class="text-xs font-black blaze-orange uppercase"></span>
-                <span id="chat-indicator" class="text-[8px] bg-zinc-900 px-2 py-1 rounded text-zinc-500 font-bold uppercase">System Ready</span>
+                <span id="chat-indicator" class="text-[8px] bg-zinc-900 px-2 py-1 rounded text-zinc-500 font-bold uppercase">Ready</span>
             </div>
             <button onclick="location.reload()" class="text-[9px] font-bold text-zinc-600 hover:text-white transition">DISCONNECT</button>
         </div>
@@ -60,7 +61,7 @@
             <div id="content-bank" class="h-full flex flex-col md:flex-row gap-6">
                 <div class="flex-1 space-y-6 overflow-y-auto pr-2 chat-scroll">
                     <div class="glass p-8 rounded-3xl text-center border-orange-600/20 border-b-2">
-                        <p class="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-2">Liquid Balance</p>
+                        <p class="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-2">Assets</p>
                         <div class="text-6xl font-black italic"><span id="bal">0</span><span class="text-lg blaze-orange ml-2">YZ</span></div>
                         <button onclick="openAI()" class="mt-4 px-6 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-bold">✨ BLAZE AI</button>
                     </div>
@@ -73,7 +74,7 @@
                     </div>
                 </div>
                 <div class="w-full md:w-64 glass p-4 rounded-3xl h-full flex flex-col border-zinc-800">
-                    <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase text-center border-b border-zinc-900 pb-2">Network</h3>
+                    <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase text-center border-b border-zinc-900 pb-2">Directory</h3>
                     <div id="user-list-bank" class="space-y-2 overflow-y-auto flex-1 chat-scroll mt-2"></div>
                 </div>
             </div>
@@ -104,8 +105,8 @@
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-[10px] font-bold text-orange-500 uppercase">Transactions</h3>
                     <div class="flex gap-4">
-                        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-500 hover:text-white uppercase font-bold">Hide All</button>
-                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-bold">Reset</button>
+                        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-500 hover:text-white uppercase font-bold px-3 py-1 border border-zinc-800 rounded">Hide All</button>
+                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-bold px-3 py-1 border border-orange-900/30 rounded">Reset</button>
                     </div>
                 </div>
                 <div id="feed" class="space-y-3 overflow-y-auto flex-1 chat-scroll pr-2"></div>
@@ -132,7 +133,7 @@
             let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
             if (acc && acc.password === p) start(acc);
             else if (!acc && confirm("ID not found. Create profile?")) {
-                const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
+                const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500, last_seen: new Date().toISOString()}]).select().single();
                 start(n);
             } else alert("INVALID KEY");
         }
@@ -143,6 +144,7 @@
             document.getElementById('dashboard').classList.remove('hidden');
             document.getElementById('user-display').innerText = `@${user.username}`;
             
+            // Heartbeat every 2s
             setInterval(() => {
                 sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username);
             }, 2000);
@@ -152,7 +154,7 @@
         }
 
         async function openAI() {
-            const q = (prompt("Query Blaze AI Assistant:") || "").toLowerCase();
+            const q = (prompt("Query Blaze AI:") || "").toLowerCase();
             if (!q) return;
             if (q.includes("zvp")) return alert("BLAZE AI: [CLASSIFIED INFORMATION]. ACCESS DENIED.");
             if (q.includes("blaze")) return alert("BLAZE AI: Blaze is a team intended to be at the top.");
@@ -182,11 +184,14 @@
             const { data: me } = await sb.from('profiles').select('*').eq('username', user.username).single();
             document.getElementById('bal').innerText = me.balance.toLocaleString();
 
+            // FIXED ONLINE LOGIC: Checks if user updated within last 45 seconds
             const { data: users } = await sb.from('profiles').select('username, last_seen');
-            const now = new Date();
+            const serverNow = new Date(); 
+            
             const dirHTML = users.map(u => {
-                const diff = Math.abs(now - new Date(u.last_seen)) / 1000;
-                const isOnline = diff < 30;
+                const lastSeen = new Date(u.last_seen);
+                const secondsDiff = Math.floor((serverNow - lastSeen) / 1000);
+                const isOnline = secondsDiff < 45; 
                 return `<div onclick="clickUser('${u.username}')" class="flex items-center justify-between p-2 glass rounded-xl cursor-pointer hover:border-orange-500 mb-1">
                     <span class="text-[10px] font-bold">@${u.username}</span>
                     <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
@@ -198,26 +203,15 @@
             const { data: allLogs } = await sb.from('transactions').select('*').order('created_at', { ascending: false });
             if(!allLogs) return;
 
-            // Notification logic
             const msgs = allLogs.filter(t => t.amount === 0);
             if(msgs.length > lastMsgCount && currentTab !== 'comms' && lastMsgCount !== 0) {
                 document.getElementById('dot-comms').style.display = 'block';
             }
             lastMsgCount = msgs.length;
 
-            // --- FIXED CHAT FILTERING ---
-            let chatF;
-            if (currentChatMode === 'global') {
-                chatF = msgs.filter(t => t.receiver === 'GLOBAL_CHAT');
-                document.getElementById('chat-indicator').innerText = "Global Channel";
-            } else {
-                // If private, only show messages between YOU and the PRIVATE TARGET
-                chatF = msgs.filter(t => 
-                    (t.sender === user.username && t.receiver === privateTarget) || 
-                    (t.sender === privateTarget && t.receiver === user.username)
-                );
-                document.getElementById('chat-indicator').innerText = privateTarget ? `Chat: @${privateTarget}` : "Select a Contact";
-            }
+            let chatF = (currentChatMode === 'global') ? 
+                msgs.filter(t => t.receiver === 'GLOBAL_CHAT') : 
+                msgs.filter(t => (t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username));
 
             document.getElementById('chat-box').innerHTML = chatF.reverse().map(m => `
                 <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : 'msg-them'}">
@@ -263,7 +257,7 @@
             const inp = document.getElementById('chat-input');
             if(!inp.value.trim()) return;
             const target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
-            if(!target) return alert("Select a recipient from the contact list first.");
+            if(!target) return alert("Select a contact");
             await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
             inp.value = ""; refresh();
         }
@@ -279,18 +273,28 @@
                 await sb.from('profiles').update({ balance: me.balance - a }).eq('username', user.username);
                 await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
                 await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: document.getElementById('note').value }]);
-                alert("YZ Sent."); refresh();
+                alert("Sent."); refresh();
             } else alert("Low Balance");
         }
 
-        function hideLog(id) { userHiddenLogs.push(id); localStorage.setItem('blaze_hidden_logs', JSON.stringify(userHiddenLogs)); refresh(); }
-        function hideAllLogs() { document.querySelectorAll('#feed button').forEach(b => b.click()); }
-        function resetLogs() { userHiddenLogs = []; localStorage.setItem('blaze_hidden_logs', JSON.stringify([])); refresh(); }
-        function toggleHelp(s) { document.getElementById('help-modal').classList.toggle('hidden', !s); }
-        async function submitHelp() { 
-            await sb.from('transactions').insert([{ sender: user.username, receiver: 'Sabaris', amount: 0, note: `[HELP]: ${document.getElementById('help-msg').value}` }]); 
-            toggleHelp(false); alert("Sent."); 
+        function hideLog(id) { 
+            userHiddenLogs.push(id); 
+            localStorage.setItem('blaze_hidden_logs', JSON.stringify(userHiddenLogs)); 
+            refresh(); 
         }
+
+        async function hideAllLogs() {
+            const { data: all } = await sb.from('transactions').select('id').or(`sender.eq.${user.username},receiver.eq.${user.username}`);
+            if (all) {
+                const ids = all.map(item => item.id);
+                userHiddenLogs = [...new Set([...userHiddenLogs, ...ids])];
+                localStorage.setItem('blaze_hidden_logs', JSON.stringify(userHiddenLogs));
+                refresh();
+            }
+        }
+
+        function resetLogs() { userHiddenLogs = []; localStorage.setItem('blaze_hidden_logs', JSON.stringify([])); refresh(); }
+        function toggleHelp(s) { alert("Feature coming soon."); }
     </script>
 </body>
 </html>
