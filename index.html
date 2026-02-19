@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLAZE BANK | OS v5.6</title>
+    <title>BLAZE BANK | OS v5.7</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,13 +13,10 @@
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background: #ff5f00; }
         
-        /* PULSING ONLINE STATUS */
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px solid #000; transition: 0.3s; }
-        .online { background: #22c55e; box-shadow: 0 0 12px #22c55e; animation: pulse 2s infinite; }
-        .offline { background: #facc15; box-shadow: 0 0 5px #facc15; }
+        .online { background: #22c55e; box-shadow: 0 0 12px #22c55e; }
+        .offline { background: #3f3f46; }
         
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
         .tab-btn { padding: 12px; font-size: 10px; font-weight: 900; letter-spacing: 2px; color: #555; position: relative; border-bottom: 2px solid transparent; }
         .tab-btn.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; background: rgba(255,95,0,0.05); }
         .noti-dot { width: 8px; height: 8px; background: #ff0000; border-radius: 50%; position: absolute; top: 6px; right: 6px; display: none; box-shadow: 0 0 8px red; }
@@ -37,10 +34,10 @@
     <div id="login-screen" class="flex-1 flex items-center justify-center p-6">
         <div class="max-w-md w-full p-10 glass rounded-[2rem] text-center border-t-4 border-orange-600 shadow-2xl">
             <h1 class="text-4xl font-black blaze-orange mb-1 italic tracking-tighter">BLAZE BANK</h1>
-            <p class="text-[9px] text-zinc-600 mb-8 tracking-[0.5em]">CORE OS v5.6 | STABLE</p>
+            <p class="text-[9px] text-zinc-600 mb-8 tracking-[0.5em]">ENCRYPTED OS v5.7</p>
             <input id="u" type="text" placeholder="USER ID" class="w-full p-4 mb-4 rounded-xl">
             <input id="p" type="password" placeholder="SECURE KEY" class="w-full p-4 mb-8 rounded-xl">
-            <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase hover:brightness-110">Connect</button>
+            <button onclick="auth()" class="w-full blaze-bg text-black font-black py-4 rounded-xl uppercase">Connect</button>
         </div>
     </div>
 
@@ -48,7 +45,7 @@
         <div class="flex justify-between items-center mb-4 px-2">
             <div class="flex items-center gap-3">
                 <span id="user-display" class="text-xs font-black blaze-orange uppercase"></span>
-                <span class="text-[8px] bg-zinc-900 px-2 py-1 rounded text-zinc-500 font-bold">NETWORK_SYNC_OK</span>
+                <span id="chat-indicator" class="text-[8px] bg-zinc-900 px-2 py-1 rounded text-zinc-500 font-bold uppercase">System Ready</span>
             </div>
             <button onclick="location.reload()" class="text-[9px] font-bold text-zinc-600 hover:text-white transition">DISCONNECT</button>
         </div>
@@ -63,7 +60,7 @@
             <div id="content-bank" class="h-full flex flex-col md:flex-row gap-6">
                 <div class="flex-1 space-y-6 overflow-y-auto pr-2 chat-scroll">
                     <div class="glass p-8 rounded-3xl text-center border-orange-600/20 border-b-2">
-                        <p class="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-2">Liquid Assets</p>
+                        <p class="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-2">Liquid Balance</p>
                         <div class="text-6xl font-black italic"><span id="bal">0</span><span class="text-lg blaze-orange ml-2">YZ</span></div>
                         <button onclick="openAI()" class="mt-4 px-6 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-bold">✨ BLAZE AI</button>
                     </div>
@@ -76,7 +73,7 @@
                     </div>
                 </div>
                 <div class="w-full md:w-64 glass p-4 rounded-3xl h-full flex flex-col border-zinc-800">
-                    <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase text-center border-b border-zinc-900 pb-2 italic">Network</h3>
+                    <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase text-center border-b border-zinc-900 pb-2">Network</h3>
                     <div id="user-list-bank" class="space-y-2 overflow-y-auto flex-1 chat-scroll mt-2"></div>
                 </div>
             </div>
@@ -88,7 +85,7 @@
                             <button id="mode-global" onclick="setChatMode('global')" class="px-4 py-2 text-[9px] font-black rounded-lg bg-orange-500 text-black">GLOBAL</button>
                             <button id="mode-private" onclick="setChatMode('private')" class="px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500">PRIVATE</button>
                         </div>
-                        <input id="dm-target" type="text" placeholder="To:" class="hidden w-24 p-2 rounded-lg text-[9px] glass ml-2">
+                        <input id="dm-target" type="text" placeholder="To:" class="hidden w-24 p-2 rounded-lg text-[9px] glass ml-2" readonly>
                         <button onclick="toggleHelp(true)" class="px-4 py-2 bg-blue-600 text-white text-[9px] font-black rounded-lg">HELP</button>
                     </div>
                     <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-2 chat-scroll"></div>
@@ -98,31 +95,20 @@
                     </div>
                 </div>
                 <div class="w-full md:w-64 glass p-4 rounded-3xl h-full flex flex-col border-zinc-800">
-                    <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase text-center border-b border-zinc-900 pb-2 italic">Contacts</h3>
+                    <h3 class="text-[10px] font-bold mb-4 text-zinc-500 uppercase text-center border-b border-zinc-900 pb-2">Contacts</h3>
                     <div id="user-list-comms" class="space-y-2 overflow-y-auto flex-1 chat-scroll mt-2"></div>
                 </div>
             </div>
 
             <div id="content-logs" class="hidden-tab h-full glass p-6 rounded-3xl flex flex-col border-zinc-800">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Financial Logs</h3>
+                    <h3 class="text-[10px] font-bold text-orange-500 uppercase">Transactions</h3>
                     <div class="flex gap-4">
-                        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-500 hover:text-white uppercase font-bold">Clear All</button>
-                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-bold">Restore</button>
+                        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-500 hover:text-white uppercase font-bold">Hide All</button>
+                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-bold">Reset</button>
                     </div>
                 </div>
                 <div id="feed" class="space-y-3 overflow-y-auto flex-1 chat-scroll pr-2"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="help-modal" class="hidden fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-6">
-        <div class="glass max-w-md w-full p-8 rounded-[2rem]">
-            <h2 class="text-xl font-black text-blue-500 uppercase italic">Contact Sabaris</h2>
-            <textarea id="help-msg" placeholder="Your message..." class="w-full h-40 p-4 rounded-2xl text-sm my-6 bg-black border border-zinc-800 text-white outline-none"></textarea>
-            <div class="flex gap-4">
-                <button onclick="submitHelp()" class="flex-1 py-4 bg-blue-600 text-white font-black rounded-xl text-xs">SEND</button>
-                <button onclick="toggleHelp(false)" class="flex-1 py-4 bg-zinc-900 text-zinc-500 font-black rounded-xl text-xs">CANCEL</button>
             </div>
         </div>
     </div>
@@ -136,6 +122,7 @@
         let user = null;
         let currentTab = 'bank';
         let currentChatMode = 'global';
+        let privateTarget = ''; 
         let userHiddenLogs = JSON.parse(localStorage.getItem('blaze_hidden_logs') || '[]');
         let lastMsgCount = 0;
 
@@ -144,10 +131,10 @@
             const p = document.getElementById('p').value;
             let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
             if (acc && acc.password === p) start(acc);
-            else if (!acc && confirm("ID not recognized. Create profile?")) {
+            else if (!acc && confirm("ID not found. Create profile?")) {
                 const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
                 start(n);
-            } else alert("ACCESS DENIED");
+            } else alert("INVALID KEY");
         }
 
         async function start(acc) {
@@ -156,12 +143,10 @@
             document.getElementById('dashboard').classList.remove('hidden');
             document.getElementById('user-display').innerText = `@${user.username}`;
             
-            // HEARTBEAT: Updates the database every 2 seconds
-            setInterval(async () => {
-                await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username);
+            setInterval(() => {
+                sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username);
             }, 2000);
 
-            // REFRESH: Updates the UI every 3 seconds
             setInterval(() => refresh(), 3000);
             refresh();
         }
@@ -198,16 +183,10 @@
             document.getElementById('bal').innerText = me.balance.toLocaleString();
 
             const { data: users } = await sb.from('profiles').select('username, last_seen');
-            
-            // TIME-INDEPENDENT STATUS CHECK
-            // We compare user's last_seen to a fresh database timestamp
-            const { data: timeCheck } = await sb.rpc('get_server_time'); // We'll use a fallback if RPC isn't set
-            const now = timeCheck ? new Date(timeCheck) : new Date();
-
+            const now = new Date();
             const dirHTML = users.map(u => {
-                const lastSeen = new Date(u.last_seen);
-                const diff = Math.abs(now - lastSeen) / 1000;
-                const isOnline = diff < 30; // 30 seconds tolerance
+                const diff = Math.abs(now - new Date(u.last_seen)) / 1000;
+                const isOnline = diff < 30;
                 return `<div onclick="clickUser('${u.username}')" class="flex items-center justify-between p-2 glass rounded-xl cursor-pointer hover:border-orange-500 mb-1">
                     <span class="text-[10px] font-bold">@${u.username}</span>
                     <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
@@ -219,15 +198,26 @@
             const { data: allLogs } = await sb.from('transactions').select('*').order('created_at', { ascending: false });
             if(!allLogs) return;
 
+            // Notification logic
             const msgs = allLogs.filter(t => t.amount === 0);
             if(msgs.length > lastMsgCount && currentTab !== 'comms' && lastMsgCount !== 0) {
                 document.getElementById('dot-comms').style.display = 'block';
             }
             lastMsgCount = msgs.length;
 
-            let chatF = currentChatMode === 'global' ? 
-                msgs.filter(t => t.receiver === 'GLOBAL_CHAT') : 
-                msgs.filter(t => (t.sender === user.username || t.receiver === user.username) && t.receiver !== 'GLOBAL_CHAT');
+            // --- FIXED CHAT FILTERING ---
+            let chatF;
+            if (currentChatMode === 'global') {
+                chatF = msgs.filter(t => t.receiver === 'GLOBAL_CHAT');
+                document.getElementById('chat-indicator').innerText = "Global Channel";
+            } else {
+                // If private, only show messages between YOU and the PRIVATE TARGET
+                chatF = msgs.filter(t => 
+                    (t.sender === user.username && t.receiver === privateTarget) || 
+                    (t.sender === privateTarget && t.receiver === user.username)
+                );
+                document.getElementById('chat-indicator').innerText = privateTarget ? `Chat: @${privateTarget}` : "Select a Contact";
+            }
 
             document.getElementById('chat-box').innerHTML = chatF.reverse().map(m => `
                 <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : 'msg-them'}">
@@ -243,23 +233,26 @@
                         <b class="${t.sender === user.username ? 'text-red-500' : 'text-green-400'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</b>
                         <span class="text-zinc-600 ml-2">(${t.sender === user.username ? 'TO ' + t.receiver : 'FROM ' + t.sender})</span>
                     </span>
-                    <button onclick="hideLog(${t.id})" class="text-zinc-800 group-hover:text-red-500">✕</button>
+                    <button onclick="hideLog(${t.id})" class="text-zinc-800 hover:text-red-500">✕</button>
                 </div>
             `).join('');
         }
 
         function clickUser(name) {
             if(name === user.username) return;
-            if(currentTab === 'bank') document.getElementById('target').value = name;
-            else { 
-                setChatMode('private'); 
+            if(currentTab === 'bank') {
+                document.getElementById('target').value = name;
+            } else {
+                setChatMode('private');
+                privateTarget = name;
                 document.getElementById('dm-target').value = name;
-                document.getElementById('chat-input').focus();
+                refresh();
             }
         }
 
         function setChatMode(mode) {
             currentChatMode = mode;
+            if(mode === 'global') privateTarget = '';
             document.getElementById('mode-global').className = mode === 'global' ? 'px-4 py-2 text-[9px] font-black rounded-lg bg-orange-500 text-black' : 'px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500';
             document.getElementById('mode-private').className = mode === 'private' ? 'px-4 py-2 text-[9px] font-black rounded-lg bg-blue-500 text-white' : 'px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500';
             document.getElementById('dm-target').classList.toggle('hidden', mode === 'global');
@@ -268,10 +261,10 @@
 
         async function handleSendMessage() {
             const inp = document.getElementById('chat-input');
-            const note = inp.value.trim();
-            if(!note) return;
-            const target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : document.getElementById('dm-target').value.trim();
-            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note }]);
+            if(!inp.value.trim()) return;
+            const target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
+            if(!target) return alert("Select a recipient from the contact list first.");
+            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
             inp.value = ""; refresh();
         }
 
@@ -301,4 +294,3 @@
     </script>
 </body>
 </html>
-
