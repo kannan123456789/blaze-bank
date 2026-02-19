@@ -13,7 +13,6 @@
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background: #ff5f00; }
         
-        /* TICKET-BASED STATUS INDICATORS */
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px solid #000; transition: 0.5s; }
         .online { background: #22c55e !important; box-shadow: 0 0 12px #22c55e; }
         .offline { background: #3f3f46 !important; }
@@ -22,9 +21,14 @@
         .tab-btn.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; background: rgba(255,95,0,0.05); }
         .chat-scroll::-webkit-scrollbar { width: 4px; }
         .chat-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        .msg-bubble { padding: 10px; border-radius: 12px; font-size: 11px; max-width: 85%; border: 1px solid #222; margin-bottom: 8px; }
+        
+        /* Fixed height chat box */
+        #chat-box { height: 450px; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        .msg-bubble { padding: 10px; border-radius: 12px; font-size: 11px; max-width: 85%; border: 1px solid #222; margin-bottom: 8px; position: relative; }
         .msg-me { border-right: 3px solid #ff5f00; margin-left: auto; background: #0a0a0a; }
         .msg-them { border-left: 3px solid #444; background: #111; }
+        
         input, textarea { background: #050505 !important; border: 1px solid #222 !important; color: white !important; outline: none; }
         .hidden-tab { display: none !important; }
     </style>
@@ -62,7 +66,6 @@
                     <div class="glass p-8 rounded-3xl text-center border-orange-600/20 border-b-2">
                         <p class="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-2">Total Assets</p>
                         <div class="text-6xl font-black italic"><span id="bal">0</span><span class="text-lg blaze-orange ml-2">YZ</span></div>
-                        <button onclick="openAI()" class="mt-4 px-6 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-bold">✨ BLAZE AI</button>
                     </div>
                     <div class="glass p-6 rounded-3xl">
                         <input id="target" type="text" placeholder="Recipient" class="w-full p-3 mb-2 rounded-xl text-xs">
@@ -84,9 +87,9 @@
                             <button id="mode-global" onclick="setChatMode('global')" class="px-4 py-2 text-[9px] font-black rounded-lg bg-orange-500 text-black">GLOBAL</button>
                             <button id="mode-private" onclick="setChatMode('private')" class="px-4 py-2 text-[9px] font-black rounded-lg text-zinc-500">PRIVATE</button>
                         </div>
-                        <button onclick="toggleHelp(true)" class="px-4 py-2 bg-blue-600 text-white text-[9px] font-black rounded-lg">HELP</button>
+                        <button onclick="resetChatLogs()" class="px-3 text-[8px] font-bold text-zinc-500 border border-zinc-800 rounded-lg hover:text-white">RESET CHAT</button>
                     </div>
-                    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-2 chat-scroll"></div>
+                    <div id="chat-box" class="p-4 space-y-2 chat-scroll"></div>
                     <div class="p-4 bg-black/60 border-t border-zinc-800 flex gap-2">
                         <input id="chat-input" type="text" placeholder="Message..." class="flex-1 p-3 rounded-xl text-xs">
                         <button onclick="handleSendMessage()" class="px-8 blaze-bg text-black rounded-xl font-black text-xs">SEND</button>
@@ -99,26 +102,7 @@
             </div>
 
             <div id="content-logs" class="hidden-tab h-full glass p-6 rounded-3xl flex flex-col border-zinc-800">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[10px] font-bold text-orange-500 uppercase">Transaction Data</h3>
-                    <div class="flex gap-4">
-                        <button onclick="hideAllLogs()" class="text-[9px] text-zinc-500 hover:text-white uppercase font-bold border border-zinc-800 px-2 py-1 rounded">Hide All</button>
-                        <button onclick="resetLogs()" class="text-[9px] text-orange-500 hover:text-white uppercase font-bold border border-orange-900/30 px-2 py-1 rounded">Reset</button>
-                    </div>
-                </div>
                 <div id="feed" class="space-y-3 overflow-y-auto flex-1 chat-scroll pr-2"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="help-modal" class="hidden fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-6">
-        <div class="glass max-w-md w-full p-8 rounded-[2rem] border-blue-600/30">
-            <h2 class="text-xl font-black text-blue-500 uppercase italic">Contact Support</h2>
-            <p class="text-[10px] text-zinc-500 mt-2">Your message will be sent directly to Sabaris.</p>
-            <textarea id="help-msg" placeholder="Describe your issue..." class="w-full h-40 p-4 rounded-2xl text-sm my-6"></textarea>
-            <div class="flex gap-4">
-                <button onclick="submitHelp()" class="flex-1 py-4 bg-blue-600 text-white font-black rounded-xl text-xs">SUBMIT TICKET</button>
-                <button onclick="toggleHelp(false)" class="flex-1 py-4 bg-zinc-900 text-zinc-500 font-black rounded-xl text-xs">CANCEL</button>
             </div>
         </div>
     </div>
@@ -126,16 +110,13 @@
     <script>
         const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
-        const GEMINI_KEY = 'AIzaSyC7HKJ01y5RXxh-OFmUsKkIZzstKMjHhHU';
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
         let user = null;
         let currentTab = 'bank';
         let currentChatMode = 'global';
         let privateTarget = ''; 
-        let userHiddenLogs = JSON.parse(localStorage.getItem('blaze_hidden_logs') || '[]');
-        let lastMsgCount = 0;
-        let oldTicketData = {}; 
+        let hiddenMessages = JSON.parse(localStorage.getItem('blaze_hidden_msgs') || '[]');
 
         async function auth() {
             const u = document.getElementById('u').value.trim();
@@ -143,7 +124,7 @@
             let { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
             if (acc && acc.password === p) start(acc);
             else if (!acc && confirm("Create new?")) {
-                const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500, last_seen: new Date().toISOString()}]).select().single();
+                const { data: n } = await sb.from('profiles').insert([{username:u, password:p, balance:500}]).select().single();
                 start(n);
             } else alert("DENIED");
         }
@@ -154,30 +135,13 @@
             document.getElementById('dashboard').classList.remove('hidden');
             document.getElementById('user-display').innerText = `@${user.username}`;
             
-            // Presence Heartbeat: Every 4 seconds, change a random number in the DB
+            // HEARTBEAT: Updates presence every 5 seconds
             setInterval(async () => {
-                await sb.from('profiles').update({ balance: user.balance }).eq('username', user.username); 
-                // Using balance update as a "poke" to refresh the updated_at timestamp on the server
-            }, 4000);
+                await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username);
+            }, 5000);
 
             setInterval(() => refresh(), 4000);
             refresh();
-        }
-
-        async function openAI() {
-            const q = (prompt("Query Blaze AI:") || "").toLowerCase();
-            if (!q) return;
-            if (q.includes("zvp")) return alert("BLAZE AI: [CLASSIFIED INFORMATION]. ACCESS DENIED.");
-            if (q.includes("blaze")) return alert("BLAZE AI: Blaze is a team intended to be at the top.");
-
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] })
-                });
-                const d = await res.json();
-                alert("BLAZE AI: " + d.candidates[0].content.parts[0].text);
-            } catch(e) { alert("AI OFFLINE"); }
         }
 
         function switchTab(tabId) {
@@ -191,18 +155,18 @@
 
         async function refresh() {
             if(!user) return;
-            const { data: me } = await sb.from('profiles').select('*').eq('username', user.username).single();
+            
+            // 1. Get Profile & All Users
+            const { data: allUsers } = await sb.from('profiles').select('*');
+            const me = allUsers.find(u => u.username === user.username);
             user.balance = me.balance;
             document.getElementById('bal').innerText = me.balance.toLocaleString();
 
-            const { data: users } = await sb.from('profiles').select('username, last_seen');
             const now = new Date();
-            
-            const dirHTML = users.map(u => {
-                // FIXED TICKET LOGIC: If updated_at is within 60 seconds of server time
+            const dirHTML = allUsers.map(u => {
                 const lastSeen = new Date(u.last_seen);
                 const diff = Math.abs(now - lastSeen) / 1000;
-                const isOnline = diff < 60; 
+                const isOnline = diff < 20; 
 
                 return `<div onclick="clickUser('${u.username}')" class="flex items-center justify-between p-2 glass rounded-xl cursor-pointer hover:border-orange-500 mb-1">
                     <span class="text-[10px] font-bold">@${u.username}</span>
@@ -212,31 +176,66 @@
             document.getElementById('user-list-bank').innerHTML = dirHTML;
             document.getElementById('user-list-comms').innerHTML = dirHTML;
 
-            const { data: allLogs } = await sb.from('transactions').select('*').order('created_at', { ascending: false });
+            // 2. Transactions & Chat
+            const { data: allLogs } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
             if(!allLogs) return;
 
-            const msgs = allLogs.filter(t => t.amount === 0);
+            // Chat Filter
+            const msgs = allLogs.filter(t => t.amount === 0 && !hiddenMessages.includes(t.id));
             let chatF = (currentChatMode === 'global') ? 
                 msgs.filter(t => t.receiver === 'GLOBAL_CHAT') : 
                 msgs.filter(t => (t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username));
 
-            document.getElementById('chat-box').innerHTML = chatF.reverse().map(m => `
-                <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : 'msg-them'}">
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = chatF.map(m => `
+                <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : 'msg-them'} group">
                     <b class="text-[7px] opacity-40 block mb-1 uppercase">${m.sender}</b>
                     ${m.note}
+                    <div class="hidden group-hover:flex gap-3 mt-2 pt-1 border-t border-white/5">
+                        <button onclick="deleteMsg(${m.id}, 'me')" class="text-[7px] text-zinc-500 hover:text-white uppercase font-bold">Hide</button>
+                        ${m.sender === user.username ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[7px] text-red-500 hover:text-red-300 uppercase font-bold">Delete Global</button>` : ''}
+                    </div>
                 </div>
             `).join('');
+            
+            // Auto-scroll logic
+            chatBox.scrollTop = chatBox.scrollHeight;
 
-            const bankLogs = allLogs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !userHiddenLogs.includes(t.id));
+            // Bank Logs
+            const bankLogs = allLogs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username)).reverse();
             document.getElementById('feed').innerHTML = bankLogs.map(t => `
-                <div class="p-3 bg-zinc-950/50 rounded-xl border border-zinc-900 flex justify-between items-center group">
+                <div class="p-3 bg-zinc-950/50 rounded-xl border border-zinc-900 flex justify-between items-center">
                     <span class="text-xs">
                         <b class="${t.sender === user.username ? 'text-red-500' : 'text-green-400'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</b>
                         <span class="text-zinc-600 ml-2">(${t.sender === user.username ? 'TO ' + t.receiver : 'FROM ' + t.sender})</span>
                     </span>
-                    <button onclick="hideLog(${t.id})" class="text-zinc-800 hover:text-red-500">✕</button>
                 </div>
             `).join('');
+        }
+
+        async function handleSendMessage() {
+            const inp = document.getElementById('chat-input');
+            const target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
+            if(!target || !inp.value.trim()) return;
+            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
+            inp.value = ""; refresh();
+        }
+
+        async function deleteMsg(id, mode) {
+            if (mode === 'everyone') {
+                if(confirm("Delete for everyone?")) await sb.from('transactions').delete().eq('id', id);
+            } else {
+                hiddenMessages.push(id);
+                localStorage.setItem('blaze_hidden_msgs', JSON.stringify(hiddenMessages));
+            }
+            refresh();
+        }
+
+        function resetChatLogs() {
+            hiddenMessages = [];
+            localStorage.setItem('blaze_hidden_msgs', JSON.stringify([]));
+            alert("Local chat history restored.");
+            refresh();
         }
 
         function clickUser(name) {
@@ -258,14 +257,6 @@
             refresh();
         }
 
-        async function handleSendMessage() {
-            const inp = document.getElementById('chat-input');
-            const target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
-            if(!target || !inp.value.trim()) return;
-            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
-            inp.value = ""; refresh();
-        }
-
         async function send() {
             const t = document.getElementById('target').value.trim();
             const a = parseInt(document.getElementById('amt').value);
@@ -280,35 +271,7 @@
                 alert("YZ Sent."); refresh();
             } else alert("Low Balance");
         }
-
-        function hideLog(id) { userHiddenLogs.push(id); localStorage.setItem('blaze_hidden_logs', JSON.stringify(userHiddenLogs)); refresh(); }
-        
-        async function hideAllLogs() {
-            const { data: all } = await sb.from('transactions').select('id').or(`sender.eq.${user.username},receiver.eq.${user.username}`);
-            if (all) {
-                userHiddenLogs = all.map(i => i.id);
-                localStorage.setItem('blaze_hidden_logs', JSON.stringify(userHiddenLogs));
-                refresh();
-            }
-        }
-
-        function resetLogs() { userHiddenLogs = []; localStorage.setItem('blaze_hidden_logs', JSON.stringify([])); refresh(); }
-        
-        // HELP LOGIC
-        function toggleHelp(s) { document.getElementById('help-modal').classList.toggle('hidden', !s); }
-        async function submitHelp() { 
-            const msg = document.getElementById('help-msg').value.trim();
-            if(!msg) return;
-            await sb.from('transactions').insert([{ 
-                sender: user.username, 
-                receiver: 'Sabaris', 
-                amount: 0, 
-                note: `[SUPPORT TICKET]: ${msg}` 
-            }]); 
-            toggleHelp(false); 
-            document.getElementById('help-msg').value = "";
-            alert("Ticket Submitted to Sabaris."); 
-        }
     </script>
 </body>
 </html>
+
