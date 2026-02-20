@@ -6,21 +6,11 @@
     <title>BLAZE BANK | Safe Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         
-        body { 
-            background: #000; 
-            color: #eee; 
-            font-family: 'JetBrains+Mono', monospace; 
-            height: 100vh; 
-            overflow: hidden; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin: 0; 
-        }
-
+        body { background: #000; color: #eee; font-family: 'JetBrains+Mono', monospace; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 0; }
         .glass { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(10px); border: 1px solid #222; }
         .blaze-orange { color: #ff5f00; }
         .blaze-bg { background: #ff5f00; }
@@ -46,18 +36,30 @@
         input { background: #000 !important; border: 1px solid #222 !important; outline: none; transition: border 0.3s; }
         input:focus { border-color: #ff5f00 !important; }
 
-        /* Animation for login */
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom style for the eye icon container */
+        .input-container { position: relative; width: 100%; }
+        .eye-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #444; cursor: pointer; transition: color 0.2s; }
+        .eye-toggle:hover { color: #ff5f00; }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="max-w-sm w-full p-8 glass rounded-3xl text-center border-t-2 border-orange-600 shadow-2xl fade-in">
         <h1 class="text-3xl font-black blaze-orange mb-1 italic tracking-tighter">BLAZE BANK</h1>
-        <p class="text-[8px] text-zinc-700 mb-6 tracking-[0.4em]">ENCRYPTED TERMINAL v2.0</p>
+        <p class="text-[8px] text-zinc-700 mb-6 tracking-[0.4em]">ENCRYPTED TERMINAL v2.1</p>
+        
         <input id="u" type="text" placeholder="USER ID" class="w-full p-3 mb-3 rounded-xl text-white text-xs">
-        <input id="p" type="password" placeholder="SECURE KEY" class="w-full p-3 mb-6 rounded-xl text-white text-xs">
+        
+        <div class="input-container mb-6">
+            <input id="p" type="password" placeholder="SECURE KEY" class="w-full p-3 rounded-xl text-white text-xs">
+            <div class="eye-toggle" onclick="togglePass()">
+                <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
+            </div>
+        </div>
+
         <button onclick="auth()" class="w-full blaze-bg text-black font-black py-3 rounded-xl uppercase text-xs hover:opacity-90 active:scale-95 transition">Establish Link</button>
     </div>
 
@@ -79,7 +81,6 @@
 
         <div class="flex flex-1 gap-4 overflow-hidden" id="main-content">
             <div class="flex-1 flex flex-col overflow-hidden">
-                
                 <div id="content-bank" class="h-full flex flex-col gap-4">
                     <div class="glass p-6 rounded-2xl text-center">
                         <p class="text-[8px] text-zinc-600 uppercase mb-1">Available Credits</p>
@@ -131,7 +132,9 @@
     </div>
 
     <script>
-        // CONFIG
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
         const SB_URL = 'https://xctauoqsgsaphnranqix.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdGF1b3FzZ3NhcGhucmFucWl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjEwMzIsImV4cCI6MjA4NjU5NzAzMn0.oNTCRhfbt8i_XJpmF77YwBmB8UzDnZDJtcNGO68rZC4';
         const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -142,17 +145,28 @@
         let hiddenMessages = JSON.parse(localStorage.getItem('blaze_hidden_msgs') || '[]');
         let hiddenBankLogs = JSON.parse(localStorage.getItem('blaze_hidden_logs') || '[]');
 
-        // AUTH LOGIC
+        // Password Visibility Toggle Logic
+        function togglePass() {
+            const pInput = document.getElementById('p');
+            const icon = document.getElementById('eye-icon');
+            
+            if (pInput.type === 'password') {
+                pInput.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                pInput.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            // Re-render the icon
+            lucide.createIcons();
+        }
+
         async function auth() {
             const u = document.getElementById('u').value.trim();
             const p = document.getElementById('p').value;
-            const { data: acc, error } = await sb.from('profiles').select('*').eq('username', u).single();
-            
-            if (acc && acc.password === p) {
-                start(acc);
-            } else {
-                alert("ACCESS DENIED: INVALID CREDENTIALS");
-            }
+            const { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
+            if (acc && acc.password === p) start(acc);
+            else alert("ACCESS DENIED");
         }
 
         async function start(acc) {
@@ -160,22 +174,15 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').style.display = 'flex';
             document.getElementById('user-display').innerText = `@${user.username}`;
-            
             if (user.username === 'Sabaris') { 
                 document.getElementById('tab-admin').classList.remove('hidden'); 
                 document.getElementById('admin-badge').classList.remove('hidden'); 
             }
-
-            // Update heartbeat
-            setInterval(async () => { 
-                await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username); 
-            }, 10000);
-
+            setInterval(async () => { await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username); }, 10000);
             setInterval(refresh, 3000);
             refresh();
         }
 
-        // NAVIGATION
         function switchTab(tabId) {
             ['bank', 'comms', 'logs', 'admin'].forEach(t => {
                 const content = document.getElementById(`content-${t}`);
@@ -185,59 +192,44 @@
             });
         }
 
-        // DATA REFRESH
         async function refresh() {
             if(!user) return;
-            
-            const { data: allUsers } = await sb.from('profiles').select('*').order('username');
+            const { data: allUsers } = await sb.from('profiles').select('*');
             const me = allUsers.find(u => u.username === user.username);
-            
-            // Update Balance & UI State
             document.getElementById('bal').innerText = me.balance.toLocaleString();
             document.getElementById('main-content').classList.toggle('frozen', me.is_frozen);
 
-            // Update Sidebar
             document.getElementById('user-list-sidebar').innerHTML = allUsers.map(u => {
                 const isOnline = (new Date() - new Date(u.last_seen)) / 1000 < 35;
-                return `
-                    <div onclick="clickUser('${u.username}')" class="flex items-center p-1.5 glass rounded-lg cursor-pointer mb-1 hover:border-zinc-500 transition">
-                        <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
-                        <span class="text-[9px] uppercase font-bold ${u.is_frozen ? 'text-red-700' : ''}">${u.username}</span>
-                    </div>`;
+                return `<div onclick="clickUser('${u.username}')" class="flex items-center p-1.5 glass rounded-lg cursor-pointer mb-1 hover:border-zinc-500 transition">
+                    <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
+                    <span class="text-[9px] uppercase font-bold ${u.is_frozen ? 'text-red-700' : ''}">${u.username}</span>
+                </div>`;
             }).join('');
 
             const { data: txs } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
-            
-            // Chat Rendering
             const msgs = txs.filter(t => t.amount === 0 && !hiddenMessages.includes(t.id));
-            let chatF = (currentChatMode === 'global') 
-                ? msgs.filter(t => t.receiver === 'GLOBAL_CHAT') 
-                : msgs.filter(t => (t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username));
-
+            let chatF = (currentChatMode === 'global') ? msgs.filter(t => t.receiver === 'GLOBAL_CHAT') : msgs.filter(t => (t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username));
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML = chatF.map(m => `
                 <div class="msg-bubble ${m.sender === user.username ? 'msg-me' : 'msg-them'} group">
                     <b class="text-[6px] opacity-30 block uppercase mb-0.5">${m.sender}</b>
-                    <span class="break-words">${m.note}</span>
+                    ${m.note}
                     <div class="hidden group-hover:flex gap-2 mt-1 border-t border-white/5 pt-0.5">
                         <button onclick="deleteMsg(${m.id}, 'me')" class="text-[6px] text-zinc-500 uppercase">Hide</button>
                         ${(m.sender === user.username || user.username === 'Sabaris') ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[6px] text-red-600 uppercase">Wipe</button>` : ''}
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
             if(chatF.length > 0) chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Bank Logs
             const myLogs = txs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !hiddenBankLogs.includes(t.id)).reverse();
             document.getElementById('feed').innerHTML = myLogs.map(t => `
                 <div class="p-2 bg-zinc-950/40 rounded-lg border border-zinc-900 flex justify-between items-center text-[9px]">
                     <span><b class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</b>
                     <span class="text-zinc-600 ml-1">${t.sender === user.username ? '→ ' + t.receiver : '← ' + t.sender}</span></span>
                     <button onclick="hideSingleLog(${t.id})" class="text-zinc-800 hover:text-white">✕</button>
-                </div>
-            `).join('');
+                </div>`).join('');
 
-            // Admin List
             if(user.username === 'Sabaris') {
                 document.getElementById('admin-user-list').innerHTML = allUsers.map(u => `
                     <div class="flex items-center justify-between p-2 glass rounded-lg text-[8px] mb-1">
@@ -246,47 +238,32 @@
                             <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600 px-1.5 py-0.5 rounded text-white text-[7px]">+10K</button>
                             <button onclick="adminAction('${u.username}', 'freeze')" class="bg-red-600 px-1.5 py-0.5 rounded text-white text-[7px]">${u.is_frozen ? 'UNFREEZE' : 'FREEZE'}</button>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`).join('');
             }
         }
 
-        // BANKING ACTIONS
         async function send() {
             const t = document.getElementById('target').value.trim();
             const a = parseInt(document.getElementById('amt').value);
             if(!t || isNaN(a) || a <= 0) return;
-
             const { data: me } = await sb.from('profiles').select('*').eq('username', user.username).single();
-            if(me.is_frozen) return alert("ACCOUNT FROZEN");
-            if(me.balance < a) return alert("INSUFFICIENT FUNDS");
-
-            const { data: them } = await sb.from('profiles').select('*').eq('username', t).single();
-            if(!them) return alert("RECIPIENT NOT FOUND");
-
-            // Execute Transaction
-            await sb.from('profiles').update({ balance: me.balance - a }).eq('username', user.username);
-            await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
-            await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: "Transfer" }]);
-            
-            document.getElementById('amt').value = "";
-            refresh();
+            if(me.is_frozen) return alert("FROZEN");
+            if(me.balance >= a) {
+                const { data: them } = await sb.from('profiles').select('*').eq('username', t).single();
+                if(!them) return alert("NO USER");
+                await sb.from('profiles').update({ balance: me.balance - a }).eq('username', user.username);
+                await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
+                await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: "Transfer" }]);
+                refresh();
+            } else { alert("INSUFFICIENT FUNDS"); }
         }
 
-        // CHAT ACTIONS
         async function handleSendMessage() {
             const inp = document.getElementById('chat-input');
             const target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
             if(!target || !inp.value.trim()) return;
-            
-            await sb.from('transactions').insert([{ 
-                sender: user.username, 
-                receiver: target, 
-                amount: 0, 
-                note: inp.value.trim() 
-            }]);
-            inp.value = ""; 
-            refresh();
+            await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
+            inp.value = ""; refresh();
         }
 
         function setChatMode(mode) {
@@ -304,34 +281,22 @@
             switchTab('comms');
         }
 
-        // LOG MANAGEMENT
         async function deleteMsg(id, mode) {
-            if (mode === 'everyone') { 
-                if(confirm("Confirm deletion from server?")) await sb.from('transactions').delete().eq('id', id); 
-            } else { 
-                hiddenMessages.push(id); 
-                localStorage.setItem('blaze_hidden_msgs', JSON.stringify(hiddenMessages)); 
-            }
+            if (mode === 'everyone') { if(confirm("Wipe from server?")) await sb.from('transactions').delete().eq('id', id); }
+            else { hiddenMessages.push(id); localStorage.setItem('blaze_hidden_msgs', JSON.stringify(hiddenMessages)); }
             refresh();
         }
 
-        function hideSingleLog(id) { 
-            hiddenBankLogs.push(id); 
-            localStorage.setItem('blaze_hidden_logs', JSON.stringify(hiddenBankLogs)); 
-            refresh(); 
-        }
-
+        function hideSingleLog(id) { hiddenBankLogs.push(id); localStorage.setItem('blaze_hidden_logs', JSON.stringify(hiddenBankLogs)); refresh(); }
         async function hideAllLogs() { 
             const { data } = await sb.from('transactions').select('id').or(`sender.eq.${user.username},receiver.eq.${user.username}`);
             hiddenBankLogs = data.map(t => t.id);
             localStorage.setItem('blaze_hidden_logs', JSON.stringify(hiddenBankLogs));
             refresh();
         }
-
         function resetLogs() { hiddenBankLogs = []; localStorage.setItem('blaze_hidden_logs', JSON.stringify([])); refresh(); }
         function resetChatLogs() { hiddenMessages = []; localStorage.setItem('blaze_hidden_msgs', JSON.stringify([])); refresh(); }
 
-        // ADMIN TOOLS
         async function adminAction(targetUser, action) {
             const { data } = await sb.from('profiles').select('*').eq('username', targetUser).single();
             if(action === 'grant') await sb.from('profiles').update({ balance: data.balance + 10000 }).eq('username', targetUser);
@@ -341,6 +306,7 @@
     </script>
 </body>
 </html>
+
 
 
 
