@@ -23,14 +23,13 @@
         .msg-bubble { padding: 6px 10px; border-radius: 10px; font-size: 10px; max-width: 85%; border: 1px solid #222; margin-bottom: 6px; position: relative; }
         .msg-me { border-right: 3px solid #ff5f00; margin-left: auto; background: #050505; }
         .msg-them { border-left: 3px solid #333; background: #111; }
-        .msg-broadcast { border: 1px solid #ff0000; background: rgba(255,0,0,0.1); color: #ff4444; width: 100%; max-width: 100%; text-align: center; font-weight: bold; }
+        .msg-broadcast { border: 1px solid #ff0000; background: rgba(255,0,0,0.1) !important; color: #ff4444 !important; width: 100% !important; max-width: 100% !important; text-align: center; border-radius: 4px !important; }
         .hidden-tab { display: none !important; }
         .frozen { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
         input { background: #000 !important; border: 1px solid #222 !important; outline: none; transition: border 0.3s; color: white; }
         input:focus { border-color: #ff5f00 !important; }
         .flicker { animation: flicker 1.5s infinite alternate; }
         @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; filter: drop-shadow(0 0 5px #ff5f00); } }
-        .eye-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #444; cursor: pointer; z-index: 20; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
         .online { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
         .offline { background: #3f3f46; }
@@ -44,7 +43,9 @@
         <input id="u" type="text" placeholder="USER ID" class="w-full p-3 mb-3 rounded-xl text-xs">
         <div class="relative mb-6">
             <input id="p" type="password" placeholder="SECURE KEY" class="w-full p-3 rounded-xl text-xs">
-            <div class="eye-toggle" onclick="togglePass()"><i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i></div>
+            <div class="absolute right-3 top-3 text-zinc-600 cursor-pointer" onclick="togglePass()">
+                <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
+            </div>
         </div>
         <button onclick="auth()" class="w-full blaze-bg text-black font-black py-3 rounded-xl uppercase text-xs">Start Banking</button>
     </div>
@@ -68,7 +69,6 @@
 
         <div id="main-ui" class="flex flex-1 gap-4 overflow-hidden">
             <div class="flex-1 flex flex-col overflow-hidden">
-                
                 <div id="content-bank" class="h-full space-y-4">
                     <div class="glass p-6 rounded-2xl text-center">
                         <p class="text-[8px] text-zinc-600 uppercase">Balance</p>
@@ -87,12 +87,12 @@
                             <button id="mode-global" onclick="setChatMode('global')" class="px-3 py-1 text-[8px] rounded bg-orange-500 text-black font-bold">GLOBAL</button>
                             <button id="mode-private" onclick="setChatMode('private')" class="px-3 py-1 text-[8px] rounded text-zinc-500 font-bold">PRIVATE</button>
                         </div>
-                        <button onclick="resetChatLogs()" class="text-[8px] text-zinc-500 hover:text-white uppercase px-2">Reset Local Comms</button>
+                        <button onclick="resetChatLogs()" class="text-[8px] text-zinc-500 hover:text-white uppercase px-2">Reset Comms</button>
                     </div>
                     <div id="chat-box" class="chat-container custom-scroll p-3 flex-1"></div>
                     <div class="p-3 border-t border-zinc-900 flex flex-col gap-2">
-                        <div id="broadcast-ui" class="hidden flex gap-2 border-b border-red-900/30 pb-2">
-                            <input id="broadcast-input" type="text" placeholder="ROOT BROADCAST..." class="flex-1 p-2 text-[10px] rounded-lg border-red-900 !border-red-600/30">
+                        <div id="broadcast-ui" class="hidden flex gap-2">
+                            <input id="broadcast-input" type="text" placeholder="SYSTEM ALERT..." class="flex-1 p-2 text-[10px] rounded-lg border-red-600/30 text-red-500">
                             <button onclick="handleBroadcast()" class="px-4 bg-red-600 text-white font-black text-[10px] rounded-lg">FLASH</button>
                         </div>
                         <div class="flex gap-2">
@@ -103,25 +103,21 @@
                 </div>
 
                 <div id="content-logs" class="hidden-tab h-full flex flex-col gap-2 overflow-hidden">
-                    <div class="flex justify-between px-1">
-                        <button onclick="hideAllLogs()" class="text-[8px] bg-zinc-900 px-2 py-1 rounded text-zinc-400">HIDE ALL LOGS</button>
-                        <button onclick="resetLogs()" class="text-[8px] text-orange-500 underline">RESTORE ALL</button>
+                    <div class="flex justify-between px-1 bg-zinc-950/50 p-2 rounded-t-lg border-b border-zinc-900">
+                        <button onclick="hideAllLogs()" class="text-[8px] bg-zinc-900 px-3 py-1.5 rounded text-zinc-400 font-bold hover:text-white transition">HIDE ALL VISIBLE</button>
+                        <button onclick="resetLogs()" class="text-[8px] text-orange-500 underline font-bold px-3">RESTORE LOGS</button>
                     </div>
-                    <div id="feed" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+                    <div id="feed" class="flex-1 overflow-y-auto custom-scroll space-y-2 p-1"></div>
                 </div>
 
                 <div id="content-admin" class="hidden-tab h-full flex flex-col gap-3 overflow-hidden">
-                    <div class="glass p-3 rounded-xl border-red-900/50 bg-red-950/5">
-                         <h3 class="text-[9px] font-black text-red-500 uppercase flex items-center gap-2">
-                            <i data-lucide="shield-check" class="w-3 h-3"></i> Root Control Active
-                         </h3>
-                    </div>
+                    <div class="glass p-3 rounded-xl border-red-900/50 bg-red-950/5 text-[9px] font-bold text-red-500 uppercase">Root Control Node</div>
                     <div id="admin-user-list" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
                 </div>
             </div>
 
             <div class="w-40 glass rounded-2xl p-3 flex flex-col">
-                <p class="text-[7px] text-zinc-600 uppercase text-center border-b border-zinc-900 mb-2">Network Nodes</p>
+                <p class="text-[7px] text-zinc-600 uppercase text-center border-b border-zinc-900 mb-2 font-bold">Network Nodes</p>
                 <div id="user-list-sidebar" class="space-y-1 flex-1 overflow-y-auto custom-scroll"></div>
             </div>
         </div>
@@ -147,7 +143,7 @@
         async function auth() {
             const u = document.getElementById('u').value.trim(), p = document.getElementById('p').value;
             const { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
-            if (acc && acc.password === p) start(acc); else alert("ACCESS DENIED");
+            if (acc && acc.password === p) start(acc); else alert("REJECTED");
         }
 
         function start(acc) {
@@ -187,7 +183,6 @@
 
             const { data: txs } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
             
-            // CHAT RENDER
             const chatBox = document.getElementById('chat-box');
             let chatF = (currentChatMode === 'global') ? txs.filter(t => t.amount === 0 && t.receiver === 'GLOBAL_CHAT') : txs.filter(t => t.amount === 0 && ((t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username)));
             
@@ -200,26 +195,23 @@
                         ${(m.sender === user.username || user.username === 'Sabaris') ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[6px] text-red-600 hover:text-red-400 uppercase font-bold">Wipe</button>` : ''}
                     </div>
                 </div>`}).join('');
-            chatBox.scrollTop = chatBox.scrollHeight;
 
-            // BANK LOGS
             const myLogs = txs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !hiddenBankLogs.includes(t.id)).reverse();
             document.getElementById('feed').innerHTML = myLogs.map(t => `
-                <div class="p-2 bg-zinc-950 border border-zinc-900 flex justify-between rounded-lg items-center text-[9px]">
+                <div class="p-2 bg-zinc-950 border border-zinc-900 flex justify-between rounded-lg items-center text-[9px] data-log-id="${t.id}">
                     <span><b class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</b>
                     <span class="text-zinc-600 ml-2">${t.sender === user.username ? '→ ' + t.receiver : '← ' + t.sender}</span></span>
-                    <button onclick="hideSingleLog(${t.id})" class="text-zinc-700 hover:text-white font-black px-2">X</button>
+                    <button onclick="hideSingleLog(${t.id})" class="text-zinc-700 hover:text-white font-black px-2 text-[10px]">X</button>
                 </div>`).join('');
 
-            // ADMIN UI
             if(user.username === 'Sabaris') {
                 document.getElementById('admin-user-list').innerHTML = allUsers.map(u => `
                     <div class="p-2 glass rounded-lg border border-zinc-900 flex justify-between items-center ${u.is_frozen ? 'bg-red-950/20' : ''}">
                         <div class="text-[9px]"><b>${u.username}</b><br><span class="text-zinc-500">${u.balance} YZ</span></div>
                         <div class="flex gap-1">
-                            <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold">+10K</button>
+                            <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600 text-white text-[7px] px-1.5 py-0.5 rounded">+10K</button>
                             <button onclick="adminAction('${u.username}', 'freeze')" class="bg-red-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold">${u.is_frozen ? 'UNLOCK' : 'FREEZE'}</button>
-                            <button onclick="adminAction('${u.username}', 'zero')" class="bg-zinc-700 text-white text-[7px] px-1.5 py-0.5 rounded font-bold">ZERO</button>
+                            <button onclick="adminAction('${u.username}', 'zero')" class="bg-zinc-700 text-white text-[7px] px-1.5 py-0.5 rounded">ZERO</button>
                         </div>
                     </div>`).join('');
             }
@@ -261,23 +253,44 @@
         }
 
         function setChatMode(m) { 
-            currentChatMode = m; 
-            document.getElementById('mode-global').className = m === 'global' ? 'px-3 py-1 text-[8px] rounded bg-orange-500 text-black font-bold' : 'px-3 py-1 text-[8px] rounded text-zinc-500 font-bold';
-            document.getElementById('mode-private').className = m === 'private' ? 'px-3 py-1 text-[8px] rounded bg-blue-600 text-white font-bold' : 'px-3 py-1 text-[8px] rounded text-zinc-500 font-bold';
-            refresh(); 
+            currentChatMode = m; refresh(); 
         }
 
         function clickUser(n) { if(n !== user.username) { document.getElementById('target').value = n; setChatMode('private'); privateTarget = n; switchTab('comms'); } }
+
+        // --- THE LOG FIXES ---
+        function hideSingleLog(id) { 
+            hiddenBankLogs.push(id); 
+            localStorage.setItem('blaze_h_l', JSON.stringify(hiddenBankLogs)); 
+            refresh(); 
+        }
+
+        function hideAllLogs() { 
+            // Select all log elements currently being shown
+            const logs = document.querySelectorAll('[data-log-id]');
+            logs.forEach(log => {
+                const id = parseInt(log.getAttribute('data-log-id'));
+                if (!hiddenBankLogs.includes(id)) hiddenBankLogs.push(id);
+            });
+            localStorage.setItem('blaze_h_l', JSON.stringify(hiddenBankLogs));
+            refresh();
+        }
+
+        function resetLogs() { 
+            hiddenBankLogs = []; 
+            localStorage.setItem('blaze_h_l', '[]'); 
+            refresh(); 
+        }
+
         async function deleteMsg(id, mode) {
-            if (mode === 'everyone') { if(confirm("WIPE DATABASE?")) await sb.from('transactions').delete().eq('id', id); }
+            if (mode === 'everyone') { if(confirm("PERMANENT WIPE?")) await sb.from('transactions').delete().eq('id', id); }
             else { hiddenMessages.push(id); localStorage.setItem('blaze_h_m', JSON.stringify(hiddenMessages)); }
             refresh();
         }
-        function hideSingleLog(id) { hiddenBankLogs.push(id); localStorage.setItem('blaze_h_l', JSON.stringify(hiddenBankLogs)); refresh(); }
-        function hideAllLogs() { resetLogs(); refresh(); }
-        function resetLogs() { hiddenBankLogs = []; localStorage.setItem('blaze_h_l', '[]'); refresh(); }
+
         function resetChatLogs() { hiddenMessages = []; localStorage.setItem('blaze_h_m', '[]'); refresh(); }
     </script>
 </body>
 </html>
+
 
