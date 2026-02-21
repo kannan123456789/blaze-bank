@@ -3,104 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blaze Bank</title>
+    <title>Blaze Bank | Premium</title>
     <link rel="icon" href="https://fav.farm/🔥">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
-        body { background: #000; color: #d4d4d8; font-family: 'JetBrains+Mono', monospace; height: 100vh; overflow: hidden; margin: 0; display: flex; align-items: center; justify-content: center; }
-        .glass { background: rgba(15, 15, 15, 0.98); border: 1px solid #27272a; }
-        .blaze-orange { color: #ff5f00; }
-        .blaze-bg { background: #ff5f00; }
-        #dashboard { width: 98%; max-width: 950px; height: 94vh; display: none; flex-direction: column; border-top: 2px solid #ff5f00; border-radius: 24px; }
-        .tab-btn { padding: 14px; font-size: 11px; color: #52525b; border-bottom: 2px solid transparent; flex: 1; text-align: center; cursor: pointer; transition: 0.2s; font-weight: 500; }
-        .tab-btn.active { color: #ff5f00; border-bottom: 2px solid #ff5f00; background: rgba(255,95,0,0.05); }
-        .msg-bubble { padding: 12px; border-radius: 12px; font-size: 13px; margin-bottom: 8px; border: 1px solid #27272a; max-width: 85%; line-height: 1.5; }
-        .msg-me { border-right: 3px solid #ff5f00; margin-left: auto; background: #09090b; }
-        .msg-them { border-left: 3px solid #3f3f46; margin-right: auto; background: #18181b; }
-        .msg-broadcast { border: 1px solid #ef4444; background: rgba(127, 29, 29, 0.2); color: #f87171; width: 100%; text-align: center; font-weight: 500; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        :root { --blaze: #ff5f00; --bg: #050505; --card: #0d0d0d; --border: #1a1a1a; }
+        
+        body { background: var(--bg); color: #a1a1aa; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; margin: 0; display: flex; align-items: center; justify-content: center; }
+        .mono { font-family: 'JetBrains+Mono', monospace; }
+        
+        /* Glass UI */
+        .glass { background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(20px); }
+        .blaze-text { color: var(--blaze); }
+        .blaze-bg { background: var(--blaze); }
+        
+        #dashboard { width: 96%; max-width: 1000px; height: 90vh; display: none; flex-direction: column; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        
+        /* Navigation */
+        .nav-btn { flex: 1; padding: 16px; font-size: 11px; font-weight: 600; color: #52525b; border-bottom: 2px solid transparent; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-btn.active { color: var(--blaze); border-bottom: 2px solid var(--blaze); background: linear-gradient(to bottom, transparent, rgba(255,95,0,0.03)); }
+        
+        /* Message Bubbles */
+        .chat-container { scroll-behavior: smooth; }
+        .msg { padding: 12px 16px; border-radius: 12px; font-size: 13px; margin-bottom: 10px; border: 1px solid var(--border); max-width: 80%; line-height: 1.6; }
+        .msg-me { margin-left: auto; background: #111; border-right: 2px solid var(--blaze); color: #efefef; }
+        .msg-them { margin-right: auto; background: #090909; border-left: 2px solid #333; }
+        .msg-broadcast { width: 100% !important; max-width: 100% !important; text-align: center; border: 1px solid #450a0a; background: #180303; color: #f87171; font-weight: 600; }
+
+        input { background: #000 !important; border: 1px solid var(--border) !important; color: #fff; padding: 14px; border-radius: 12px; font-size: 14px; transition: 0.2s; }
+        input:focus { border-color: var(--blaze) !important; outline: none; }
+        
         .hidden-tab { display: none !important; }
-        input { background: #09090b !important; border: 1px solid #27272a !important; color: white; outline: none; padding: 14px; border-radius: 12px; font-size: 14px; width: 100%; }
-        input:focus { border-color: #ff5f00 !important; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
-        .flicker { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #222; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen" class="max-w-xs w-full p-8 glass rounded-[32px] text-center">
-        <i data-lucide="flame" class="blaze-orange flicker w-12 h-12 mx-auto mb-4"></i>
-        <h2 class="text-xl font-medium text-white mb-6 tracking-tight">Blaze Bank</h2>
+    <div id="login-screen" class="max-w-xs w-full p-10 glass rounded-[30px] text-center border-t-2 border-[#ff5f00]">
+        <div class="mb-6 inline-flex p-4 rounded-full bg-orange-500/5">
+            <i data-lucide="flame" class="blaze-text w-10 h-10 animate-pulse"></i>
+        </div>
+        <h2 class="text-2xl font-semibold text-white mb-2 tracking-tight">Blaze Bank</h2>
+        <p class="text-xs text-zinc-500 mb-8 uppercase letter-spacing-2">Secure Node Access</p>
+        
         <div class="space-y-4">
-            <input id="u" type="text" placeholder="Username">
-            <input id="p" type="password" placeholder="Secure Key">
-            <button onclick="auth()" class="w-full blaze-bg text-black font-bold py-4 rounded-xl text-xs uppercase tracking-widest">Access Terminal</button>
+            <input id="u" type="text" placeholder="Username" class="w-full">
+            <input id="p" type="password" placeholder="Key" class="w-full">
+            <button onclick="auth()" class="w-full blaze-bg text-black font-bold py-4 rounded-xl text-xs uppercase tracking-widest hover:brightness-110 transition">Connect</button>
         </div>
     </div>
 
     <div id="dashboard" class="glass overflow-hidden flex flex-col">
-        <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-black/50">
-            <div class="flex items-center gap-2">
-                <i data-lucide="flame" class="blaze-orange w-4 h-4"></i>
-                <span id="user-display" class="text-xs text-white font-medium"></span>
-                <span id="admin-badge" class="hidden text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-bold ml-2">ADMIN</span>
+        <div class="px-6 py-4 border-b border-zinc-800/50 flex justify-between items-center bg-black/20">
+            <div class="flex items-center gap-3">
+                <i data-lucide="shield-check" class="blaze-text w-5 h-5"></i>
+                <span id="user-display" class="text-sm text-white font-medium tracking-wide"></span>
+                <span id="admin-badge" class="hidden text-[9px] bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded uppercase font-bold">Admin</span>
             </div>
-            <button onclick="location.reload()" class="text-[10px] text-zinc-500 uppercase font-medium">Logout</button>
+            <button onclick="location.reload()" class="text-[10px] text-zinc-600 hover:text-white uppercase font-bold tracking-widest transition">Disconnect</button>
         </div>
 
-        <div class="flex border-b border-zinc-800 bg-zinc-950">
-            <button onclick="switchTab('bank')" id="tab-bank" class="tab-btn active"><i data-lucide="wallet" class="w-4 h-4 mx-auto mb-1"></i>Bank</button>
-            <button onclick="switchTab('comms')" id="tab-comms" class="tab-btn"><i data-lucide="message-square" class="w-4 h-4 mx-auto mb-1"></i>Comms</button>
-            <button onclick="switchTab('logs')" id="tab-logs" class="tab-btn"><i data-lucide="activity" class="w-4 h-4 mx-auto mb-1"></i>Logs</button>
-            <button onclick="switchTab('admin')" id="tab-admin" class="tab-btn hidden text-red-500"><i data-lucide="shield" class="w-4 h-4 mx-auto mb-1"></i>Admin</button>
+        <div class="flex bg-black/40 border-b border-zinc-800/50">
+            <button onclick="switchTab('bank')" id="tab-bank" class="nav-btn active">Terminal</button>
+            <button onclick="switchTab('comms')" id="tab-comms" class="nav-btn">Comms</button>
+            <button onclick="switchTab('logs')" id="tab-logs" class="nav-btn">Activity</button>
+            <button onclick="switchTab('admin')" id="tab-admin" class="nav-btn hidden !text-red-500">Systems</button>
         </div>
 
         <div class="flex flex-1 overflow-hidden">
-            <div class="flex-1 flex flex-col p-4 overflow-hidden">
+            <div class="flex-1 flex flex-col p-6 overflow-hidden">
                 
-                <div id="content-bank" class="h-full flex flex-col gap-6">
-                    <div class="glass p-10 rounded-3xl text-center border-zinc-800/50">
-                        <p class="text-xs text-zinc-500 mb-2">Available Credits</p>
-                        <div class="text-6xl font-light text-white"><span id="bal">0</span> <span class="text-lg blaze-orange">YZ</span></div>
+                <div id="content-bank" class="h-full flex flex-col items-center justify-center space-y-8">
+                    <div class="w-full max-w-md p-12 rounded-[40px] border border-zinc-800/50 bg-gradient-to-b from-zinc-900/50 to-transparent text-center">
+                        <p class="text-[10px] uppercase text-zinc-500 font-bold tracking-[4px] mb-4">Total Liquidity</p>
+                        <div class="text-7xl font-light text-white tracking-tighter mono"><span id="bal">0</span><span class="text-xl blaze-text ml-2">YZ</span></div>
                     </div>
-                    <div class="glass p-6 rounded-3xl space-y-4">
-                        <input id="target" type="text" placeholder="Recipient username">
-                        <input id="amt" type="number" placeholder="Amount to send">
-                        <button onclick="send()" class="w-full py-5 blaze-bg text-black font-bold rounded-2xl text-xs uppercase tracking-widest">Send YZ</button>
+                    
+                    <div class="w-full max-w-md grid grid-cols-1 gap-4">
+                        <input id="target" type="text" placeholder="Recipient node">
+                        <input id="amt" type="number" placeholder="Transfer amount">
+                        <button onclick="send()" class="w-full py-5 blaze-bg text-black font-bold rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/10 hover:scale-[1.02] active:scale-95 transition">Authorize Transaction</button>
                     </div>
                 </div>
 
-                <div id="content-comms" class="hidden-tab h-full flex flex-col glass rounded-3xl overflow-hidden">
-                    <div class="p-3 border-b border-zinc-800 flex justify-between bg-black/40 items-center">
-                        <div class="flex gap-2">
-                            <button id="mode-global" onclick="setChatMode('global')" class="px-5 py-2 text-xs rounded-lg transition-all font-medium">Global</button>
-                            <button id="mode-private" onclick="setChatMode('private')" class="px-5 py-2 text-xs rounded-lg transition-all font-medium">Private</button>
+                <div id="content-comms" class="hidden-tab h-full flex flex-col border border-zinc-800/50 rounded-3xl overflow-hidden bg-black/20">
+                    <div class="p-3 border-b border-zinc-800 flex justify-between items-center px-6">
+                        <div class="flex bg-zinc-900/50 p-1 rounded-xl">
+                            <button id="mode-global" onclick="setChatMode('global')" class="px-6 py-1.5 text-[10px] rounded-lg transition-all font-bold">GLOBAL</button>
+                            <button id="mode-private" onclick="setChatMode('private')" class="px-6 py-1.5 text-[10px] rounded-lg transition-all font-bold">PRIVATE</button>
                         </div>
-                        <button onclick="resetChatLogs()" class="text-[10px] text-zinc-500 px-3 hover:text-white transition">Reset Chat</button>
+                        <button onclick="resetChatLogs()" class="text-[10px] text-zinc-600 hover:text-white uppercase font-bold">Clean Feed</button>
                     </div>
-                    <div id="chat-box" class="flex-1 p-5 overflow-y-auto custom-scroll"></div>
-                    <div class="p-4 border-t border-zinc-800 bg-zinc-950/50 space-y-3">
-                        <div id="broadcast-ui" class="hidden flex gap-2">
-                            <input id="broadcast-input" type="text" placeholder="Flash message..." class="border-red-900/40 text-red-400 bg-red-900/5">
+                    <div id="chat-box" class="flex-1 p-6 overflow-y-auto custom-scroll chat-container"></div>
+                    <div class="p-4 bg-zinc-900/20 border-t border-zinc-800/50">
+                        <div id="broadcast-ui" class="hidden mb-4 flex gap-2">
+                            <input id="broadcast-input" type="text" placeholder="Admin Broadcast..." class="flex-1 border-red-900/50 text-red-500">
                             <button onclick="handleBroadcast()" class="px-6 bg-red-600 text-white font-bold rounded-xl text-xs">FLASH</button>
                         </div>
                         <div class="flex gap-2">
-                            <input id="chat-input" type="text" placeholder="Type message...">
-                            <button onclick="handleSendMessage()" class="px-8 blaze-bg text-black font-bold rounded-xl text-xs">SEND</button>
+                            <input id="chat-input" type="text" placeholder="Enter secure message..." class="flex-1">
+                            <button onclick="handleSendMessage()" class="px-8 blaze-bg text-black font-bold rounded-xl text-xs uppercase">Send</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="content-logs" class="hidden-tab h-full flex flex-col gap-3">
+                <div id="content-logs" class="hidden-tab h-full flex flex-col gap-4">
                     <div class="flex justify-between items-center px-2">
-                        <button onclick="hideAllLogsNow()" class="text-[11px] text-zinc-500 hover:text-white">Hide All Logs</button>
-                        <button onclick="resetLogs()" class="text-[11px] text-orange-500 font-medium">Restore Logs</button>
+                        <p class="text-xs font-bold text-zinc-500 uppercase tracking-widest">Transaction History</p>
+                        <button onclick="resetLogs()" class="text-[10px] text-orange-500 hover:underline">Restore All</button>
                     </div>
-                    <div id="feed" class="flex-1 overflow-y-auto space-y-3 custom-scroll"></div>
+                    <div id="feed" class="flex-1 overflow-y-auto space-y-2 custom-scroll"></div>
                 </div>
 
                 <div id="content-admin" class="hidden-tab h-full overflow-y-auto custom-scroll space-y-3">
@@ -108,8 +125,8 @@
                 </div>
             </div>
 
-            <div class="w-52 border-l border-zinc-800 p-5 overflow-y-auto hidden sm:block">
-                <p class="text-[10px] text-zinc-600 uppercase mb-5 font-bold tracking-widest text-center">Nodes</p>
+            <div class="w-60 border-l border-zinc-800/50 p-6 overflow-y-auto hidden md:block bg-black/20">
+                <p class="text-[10px] text-zinc-600 uppercase mb-6 font-bold tracking-[3px] text-center">Active Nodes</p>
                 <div id="user-list-sidebar" class="space-y-3"></div>
             </div>
         </div>
@@ -121,8 +138,7 @@
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
         const ADMINS = ['Sabaris', 'Haneesh'];
-        let user = null, currentChatMode = 'global', privateTarget = '', currentTxData = [];
-        let activeTab = 'bank';
+        let user = null, currentChatMode = 'global', privateTarget = '', activeTab = 'bank';
         let hiddenMessages = JSON.parse(localStorage.getItem('blaze_h_m') || '[]');
         let hiddenBankLogs = JSON.parse(localStorage.getItem('blaze_h_l') || '[]');
 
@@ -132,13 +148,13 @@
             if(!u) return;
             const { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
             if (!acc) {
-                if(confirm(`Create new account for ${u} with 500 YZ?`)) {
+                if(confirm(`Register node ${u}? (500 YZ Initialized)`)) {
                     await sb.from('profiles').insert([{ username: u, password: p, balance: 500 }]);
                     auth();
                 }
             } else if(acc.password === p) {
                 user = acc; start();
-            } else { alert("Invalid credentials."); }
+            } else { alert("Verification Failed."); }
         }
 
         function start() {
@@ -166,9 +182,9 @@
         function setChatMode(m) {
             currentChatMode = m;
             const g = document.getElementById('mode-global'), p = document.getElementById('mode-private');
-            g.style.background = m === 'global' ? '#ff5f00' : '#18181b';
+            g.style.background = m === 'global' ? '#ff5f00' : 'transparent';
             g.style.color = m === 'global' ? '#000' : '#52525b';
-            p.style.background = m === 'private' ? '#ff5f00' : '#18181b';
+            p.style.background = m === 'private' ? '#ff5f00' : 'transparent';
             p.style.color = m === 'private' ? '#000' : '#52525b';
             refresh();
         }
@@ -178,40 +194,42 @@
             const { data: me } = await sb.from('profiles').select('balance, is_frozen').eq('username', user.username).single();
             if(me) {
                 document.getElementById('bal').innerText = me.balance.toLocaleString();
-                if(me.is_frozen) { document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20%'>ACCOUNT FROZEN BY SYSTEM ADMIN</h1>"; }
+                if(me.is_frozen) { document.body.innerHTML = "<div class='text-red-500 font-bold'>NODE DISCONNECTED: ADMINISTRATIVE LOCK</div>"; }
             }
 
             const { data: users } = await sb.from('profiles').select('username');
             document.getElementById('user-list-sidebar').innerHTML = users.map(u => `
-                <div onclick="clickUser('${u.username}')" class="p-3 border border-zinc-800 rounded-xl text-xs cursor-pointer hover:border-orange-500 transition-all text-zinc-300">
-                    ${u.username}
+                <div onclick="clickUser('${u.username}')" class="p-3 border border-zinc-800/50 rounded-xl text-xs cursor-pointer hover:bg-zinc-900/50 transition-all flex items-center gap-3">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_green]"></div>
+                    <span class="text-zinc-400 font-medium">${u.username}</span>
                 </div>`).join('');
 
             const { data: txs } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
-            currentTxData = txs;
-
+            
             const chatBox = document.getElementById('chat-box');
             let chatF = (currentChatMode === 'global') ? txs.filter(t => t.amount === 0 && t.receiver === 'GLOBAL_CHAT') : txs.filter(t => t.amount === 0 && ((t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username)));
+            
             chatBox.innerHTML = chatF.filter(m => !hiddenMessages.includes(m.id)).map(m => `
-                <div class="msg-bubble ${m.note.startsWith('[ADMIN]') ? 'msg-broadcast' : (m.sender === user.username ? 'msg-me' : 'msg-them')}">
-                    <span class="text-[9px] opacity-40 uppercase font-bold">${m.sender}</span><br>${m.note.replace('[ADMIN] ', '')}
+                <div class="msg ${m.note.startsWith('[ADMIN]') ? 'msg-broadcast' : (m.sender === user.username ? 'msg-me' : 'msg-them')}">
+                    <p class="text-[9px] opacity-40 uppercase font-black mb-1">${m.sender}</p>
+                    <p>${m.note.replace('[ADMIN] ', '')}</p>
                 </div>`).join('');
             
             const myLogs = txs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !hiddenBankLogs.includes(t.id)).reverse();
             document.getElementById('feed').innerHTML = myLogs.map(t => `
-                <div class="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex justify-between text-xs">
-                    <span><span class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</span> <span class="text-zinc-600 mx-2">|</span> ${t.sender === user.username ? 'To: ' + t.receiver : 'From: ' + t.sender}</span>
-                    <button onclick="hideSingleLog(${t.id})" class="text-zinc-700">x</button>
+                <div class="p-4 bg-zinc-900/20 border border-zinc-800/50 rounded-2xl flex justify-between items-center text-xs">
+                    <span><span class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'} font-bold">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</span> <span class="text-zinc-600 mx-3">/</span> ${t.sender === user.username ? 'TO: ' + t.receiver : 'FROM: ' + t.sender}</span>
+                    <button onclick="hideSingleLog(${t.id})" class="text-zinc-700 hover:text-white transition">X</button>
                 </div>`).join('');
 
             if(ADMINS.includes(user.username)) {
                 document.getElementById('admin-user-list').innerHTML = users.map(u => `
-                    <div class="p-4 glass rounded-2xl border border-zinc-800 flex justify-between items-center">
-                        <span class="text-sm text-white">${u.username}</span>
+                    <div class="p-4 border border-zinc-800 rounded-2xl flex justify-between items-center bg-black/40">
+                        <span class="text-xs font-medium">${u.username}</span>
                         <div class="flex gap-2">
-                            <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600/20 text-green-500 px-3 py-1.5 rounded-lg text-[10px] font-bold">+10K</button>
-                            <button onclick="adminAction('${u.username}', 'zero')" class="bg-zinc-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold">ZERO</button>
-                            <button onclick="adminAction('${u.username}', 'freeze')" class="bg-red-600/20 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-bold">FREEZE</button>
+                            <button onclick="adminAction('${u.username}', 'grant')" class="bg-green-600/10 text-green-500 px-4 py-2 rounded-xl text-[10px] font-bold">CREDIT</button>
+                            <button onclick="adminAction('${u.username}', 'zero')" class="bg-zinc-800 text-white px-4 py-2 rounded-xl text-[10px] font-bold">ZERO</button>
+                            <button onclick="adminAction('${u.username}', 'freeze')" class="bg-red-600/10 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">LOCK</button>
                         </div>
                     </div>`).join('');
             }
@@ -229,12 +247,12 @@
                 await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
                 await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: "Transfer" }]);
                 document.getElementById('amt').value = ""; document.getElementById('target').value = ""; refresh();
-            } else { alert("Target not found or insufficient funds."); }
+            } else { alert("Unauthorized: Insufficient balance or invalid node."); }
         }
 
         async function handleSendMessage() {
             const inp = document.getElementById('chat-input'), target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
-            if(!inp.value.trim() || (currentChatMode === 'private' && !privateTarget)) return;
+            if(!inp.value.trim()) return;
             await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
             inp.value = ""; refresh();
         }
@@ -254,26 +272,21 @@
             refresh();
         }
 
-        // SMART CLICK LOGIC
         function clickUser(n) { 
             if(n === user.username) return;
             if(activeTab === 'bank') {
                 document.getElementById('target').value = n;
             } else {
-                setChatMode('private'); 
-                privateTarget = n; 
-                switchTab('comms'); 
+                setChatMode('private'); privateTarget = n; switchTab('comms'); 
             }
         }
         
         function hideSingleLog(id) { hiddenBankLogs.push(id); localStorage.setItem('blaze_h_l', JSON.stringify(hiddenBankLogs)); refresh(); }
-        function hideAllLogsNow() { currentTxData.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username)).forEach(t => { if (!hiddenBankLogs.includes(t.id)) hiddenBankLogs.push(t.id); }); localStorage.setItem('blaze_h_l', JSON.stringify(hiddenBankLogs)); refresh(); }
         function resetLogs() { hiddenBankLogs = []; localStorage.setItem('blaze_h_l', '[]'); refresh(); }
         function resetChatLogs() { hiddenMessages = []; localStorage.setItem('blaze_h_m', '[]'); refresh(); }
     </script>
 </body>
 </html>
-
 
 
 
