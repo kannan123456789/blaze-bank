@@ -143,27 +143,59 @@
 
         async function auth() {
             const u = document.getElementById('u').value.trim(), p = document.getElementById('p').value;
-            const { data: acc } = await sb.from('profiles').select('*').eq('username', u).single();
-            if (acc && acc.password === p) start(acc); else alert("ACCESS DENIED");
+            if(!u || !p) return;
+
+            const { data: acc, error } = await sb.from('profiles').select('*').eq('username', u).single();
+            
+            if (acc) {
+                if (acc.password === p) {
+                    start(acc);
+                } else {
+                    alert("ACCESS DENIED: INVALID KEY");
+                }
+            } else {
+                // USER NOT FOUND - ASK TO CREATE
+                const create = confirm(`USER "${u}" NOT FOUND. WOULD YOU LIKE TO CREATE A NEW ACCOUNT?`);
+                if (create) {
+                    const { data: newUser, error: regError } = await sb.from('profiles').insert([
+                        { username: u, password: p, balance: 1000, is_frozen: false, last_seen: new Date().toISOString() }
+                    ]).select().single();
+                    
+                    if (regError) {
+                        alert("ERROR CREATING ACCOUNT: " + regError.message);
+                    } else {
+                        alert("ACCOUNT CREATED! LOGGING IN...");
+                        start(newUser);
+                    }
+                }
+            }
         }
 
         function start(acc) {
-            user = acc; document.getElementById('login-screen').classList.add('hidden');
+            user = acc; 
+            document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('dashboard').style.display = 'flex';
             document.getElementById('user-display').innerText = `@${user.username}`;
-            if (user.username === 'Sabaris') {
+            
+            // MULTIPLE ADMIN CHECK
+            const admins = ['Sabaris', 'Haneesh'];
+            if (admins.includes(user.username)) {
                 document.getElementById('tab-admin').classList.remove('hidden');
                 document.getElementById('admin-badge').classList.remove('hidden');
                 document.getElementById('broadcast-ui').classList.remove('hidden');
             }
+            
             setInterval(async () => { await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('username', user.username); }, 10000);
-            setInterval(refresh, 2500); refresh();
+            setInterval(refresh, 2500); 
+            refresh();
         }
 
         function switchTab(t) {
             ['bank','comms','logs','admin'].forEach(id => {
-                document.getElementById(`content-${id}`).classList.toggle('hidden-tab', id !== t);
-                document.getElementById(`tab-${id}`).classList.toggle('active', id === t);
+                const content = document.getElementById(`content-${id}`);
+                const tab = document.getElementById(`tab-${id}`);
+                if (content) content.classList.toggle('hidden-tab', id !== t);
+                if (tab) tab.classList.toggle('active', id === t);
             });
         }
 
@@ -171,8 +203,11 @@
             if(!user) return;
             const { data: allUsers } = await sb.from('profiles').select('*');
             const me = allUsers.find(u => u.username === user.username);
-            document.getElementById('bal').innerText = me.balance.toLocaleString();
-            document.getElementById('main-ui').classList.toggle('frozen', me.is_frozen);
+            
+            if (me) {
+                document.getElementById('bal').innerText = me.balance.toLocaleString();
+                document.getElementById('main-ui').classList.toggle('frozen', me.is_frozen);
+            }
 
             document.getElementById('user-list-sidebar').innerHTML = allUsers.map(u => {
                 const online = (new Date() - new Date(u.last_seen)) / 1000 < 30;
@@ -183,23 +218,26 @@
             }).join('');
 
             const { data: txs } = await sb.from('transactions').select('*').order('created_at', { ascending: true });
-            currentTxData = txs; // Store for Hide All logic
+            currentTxData = txs || [];
             
             // CHAT
             const chatBox = document.getElementById('chat-box');
-            let chatF = (currentChatMode === 'global') ? txs.filter(t => t.amount === 0 && t.receiver === 'GLOBAL_CHAT') : txs.filter(t => t.amount === 0 && ((t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username)));
+            let chatF = (currentChatMode === 'global') 
+                ? currentTxData.filter(t => t.amount === 0 && t.receiver === 'GLOBAL_CHAT') 
+                : currentTxData.filter(t => t.amount === 0 && ((t.sender === user.username && t.receiver === privateTarget) || (t.sender === privateTarget && t.receiver === user.username)));
+            
             chatBox.innerHTML = chatF.filter(m => !hiddenMessages.includes(m.id)).map(m => {
                 const isBroadcast = m.note.startsWith('[BROADCAST]');
                 return `<div class="msg-bubble ${isBroadcast ? 'msg-broadcast' : (m.sender === user.username ? 'msg-me' : 'msg-them')} group">
                     <b class="text-[6px] opacity-30 block uppercase">${m.sender}</b> ${m.note.replace('[BROADCAST] ', '')}
                     <div class="hidden group-hover:flex gap-3 mt-1.5 border-t border-white/5 pt-1">
                         <button onclick="deleteMsg(${m.id}, 'me')" class="text-[6px] text-zinc-500 hover:text-white uppercase font-bold">Hide</button>
-                        ${(m.sender === user.username || user.username === 'Sabaris') ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[6px] text-red-600 hover:text-red-400 uppercase font-bold">Wipe</button>` : ''}
+                        ${(m.sender === user.username || ['Sabaris', 'Haneesh'].includes(user.username)) ? `<button onclick="deleteMsg(${m.id}, 'everyone')" class="text-[6px] text-red-600 hover:text-red-400 uppercase font-bold">Wipe</button>` : ''}
                     </div>
                 </div>`}).join('');
 
             // LOGS
-            const myLogs = txs.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !hiddenBankLogs.includes(t.id)).reverse();
+            const myLogs = currentTxData.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username) && !hiddenBankLogs.includes(t.id)).reverse();
             document.getElementById('feed').innerHTML = myLogs.map(t => `
                 <div class="p-2 bg-zinc-950 border border-zinc-900 flex justify-between rounded-lg items-center text-[9px]">
                     <span><b class="${t.sender === user.username ? 'text-red-500' : 'text-green-500'}">${t.sender === user.username ? '-' : '+'}${t.amount} YZ</b>
@@ -208,7 +246,7 @@
                 </div>`).join('');
 
             // ADMIN
-            if(user.username === 'Sabaris') {
+            if(['Sabaris', 'Haneesh'].includes(user.username)) {
                 document.getElementById('admin-user-list').innerHTML = allUsers.map(u => `
                     <div class="p-2 glass rounded-lg border border-zinc-900 flex justify-between items-center ${u.is_frozen ? 'bg-red-950/20' : ''}">
                         <div class="text-[9px]"><b>${u.username}</b><br><span class="text-zinc-500">${u.balance} YZ</span></div>
@@ -231,12 +269,17 @@
                 await sb.from('profiles').update({ balance: them.balance + a }).eq('username', t);
                 await sb.from('transactions').insert([{ sender: user.username, receiver: t, amount: a, note: "Transfer" }]);
                 document.getElementById('amt').value = ""; refresh();
+            } else if (!them) {
+                alert("RECIPIENT NOT FOUND");
+            } else {
+                alert("INSUFFICIENT FUNDS");
             }
         }
 
         async function handleSendMessage() {
             const inp = document.getElementById('chat-input'), target = currentChatMode === 'global' ? 'GLOBAL_CHAT' : privateTarget;
             if(!inp.value.trim()) return;
+            if (currentChatMode === 'private' && !privateTarget) { alert("SELECT A USER FROM SIDEBAR TO PM"); return; }
             await sb.from('transactions').insert([{ sender: user.username, receiver: target, amount: 0, note: inp.value.trim() }]);
             inp.value = ""; refresh();
         }
@@ -256,10 +299,34 @@
             refresh();
         }
 
-        function setChatMode(m) { currentChatMode = m; refresh(); }
-        function clickUser(n) { if(n !== user.username) { document.getElementById('target').value = n; setChatMode('private'); privateTarget = n; switchTab('comms'); } }
+        function setChatMode(m) { 
+            currentChatMode = m; 
+            const globalBtn = document.getElementById('mode-global');
+            const privateBtn = document.getElementById('mode-private');
 
-        // --- FIXED LOG ACTIONS ---
+            if (m === 'global') {
+                globalBtn.classList.replace('text-zinc-500', 'text-black');
+                globalBtn.classList.add('bg-orange-500');
+                privateBtn.classList.replace('text-black', 'text-zinc-500');
+                privateBtn.classList.remove('bg-orange-500');
+            } else {
+                privateBtn.classList.replace('text-zinc-500', 'text-black');
+                privateBtn.classList.add('bg-orange-500');
+                globalBtn.classList.replace('text-black', 'text-zinc-500');
+                globalBtn.classList.remove('bg-orange-500');
+            }
+            refresh(); 
+        }
+
+        function clickUser(n) { 
+            if(n !== user.username) { 
+                document.getElementById('target').value = n; 
+                privateTarget = n; 
+                setChatMode('private'); 
+                switchTab('comms'); 
+            } 
+        }
+
         function hideSingleLog(id) {
             hiddenBankLogs.push(id);
             localStorage.setItem('blaze_h_l', JSON.stringify(hiddenBankLogs));
@@ -267,7 +334,6 @@
         }
 
         function hideAllLogsNow() {
-            // Get all visible transaction IDs from the current data
             const visibleLogs = currentTxData.filter(t => t.amount > 0 && (t.sender === user.username || t.receiver === user.username));
             visibleLogs.forEach(t => {
                 if (!hiddenBankLogs.includes(t.id)) hiddenBankLogs.push(t.id);
@@ -292,6 +358,7 @@
     </script>
 </body>
 </html>
+
 
 
 
