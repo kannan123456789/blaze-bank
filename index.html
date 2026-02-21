@@ -47,7 +47,7 @@
                 <i data-lucide="eye" id="eye-icon" class="w-4 h-4"></i>
             </div>
         </div>
-        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-3 rounded-xl uppercase text-xs">Access Terminal</button>
+        <button onclick="auth()" class="w-full blaze-bg text-black font-black py-3 rounded-xl uppercase text-xs">Start Banking</button>
     </div>
 
     <div id="dashboard" class="glass rounded-3xl shadow-2xl p-4">
@@ -57,7 +57,7 @@
                 <span id="user-display" class="text-[10px] font-black blaze-orange uppercase"></span>
                 <span id="admin-badge" class="hidden text-[7px] bg-red-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">Admin</span>
             </div>
-            <button onclick="location.reload()" class="text-[8px] text-zinc-600 uppercase font-bold hover:text-white">Exit</button>
+            <button onclick="location.reload()" class="text-[8px] text-zinc-600 uppercase font-bold hover:text-white">Logout</button>
         </div>
 
         <div class="flex border-b border-zinc-900 mb-4">
@@ -71,13 +71,13 @@
             <div class="flex-1 flex flex-col overflow-hidden">
                 <div id="content-bank" class="h-full space-y-4">
                     <div class="glass p-6 rounded-2xl text-center">
-                        <p class="text-[8px] text-zinc-600 uppercase">Available Credits</p>
+                        <p class="text-[8px] text-zinc-600 uppercase">Balance</p>
                         <div class="text-4xl font-black italic"><span id="bal">0</span><span class="text-xs blaze-orange ml-1">YZ</span></div>
                     </div>
                     <div class="glass p-4 rounded-2xl space-y-2">
                         <input id="target" type="text" placeholder="Recipient ID" class="w-full p-2 text-[10px] rounded-lg">
                         <input id="amt" type="number" placeholder="Amount" class="w-full p-2 text-[10px] rounded-lg">
-                        <button onclick="send()" class="w-full py-3 blaze-bg text-black font-black rounded-lg text-[10px]">EXECUTE TRANSFER</button>
+                        <button onclick="send()" class="w-full py-3 blaze-bg text-black font-black rounded-lg text-[10px]">TRANSFER</button>
                     </div>
                 </div>
 
@@ -96,7 +96,7 @@
                             <button onclick="handleBroadcast()" class="px-4 bg-red-600 text-white font-black text-[10px] rounded-lg">FLASH</button>
                         </div>
                         <div class="flex gap-2">
-                            <input id="chat-input" type="text" placeholder="Transmission..." class="flex-1 p-2 text-[10px] rounded-lg">
+                            <input id="chat-input" type="text" placeholder="Message..." class="flex-1 p-2 text-[10px] rounded-lg">
                             <button onclick="handleSendMessage()" class="px-4 blaze-bg text-black font-black text-[10px] rounded-lg">SEND</button>
                         </div>
                     </div>
@@ -117,7 +117,7 @@
             </div>
 
             <div class="w-40 glass rounded-2xl p-3 flex flex-col">
-                <p class="text-[7px] text-zinc-600 uppercase text-center border-b border-zinc-900 mb-2 font-bold">Network Nodes</p>
+                <p class="text-[7px] text-zinc-600 uppercase text-center border-b border-zinc-900 mb-2 font-bold">Network Directory</p>
                 <div id="user-list-sidebar" class="space-y-1 flex-1 overflow-y-auto custom-scroll"></div>
             </div>
         </div>
@@ -283,7 +283,7 @@
         }
 
         async function deleteMsg(id, mode) {
-            if (mode === 'everyone') { if(confirm("PERMANENT WIPE?")) await sb.from('transactions').delete().eq('id', id); }
+            if (mode === 'everyone') { if(confirm("PERMANENTLY DELETE THIS MESSAGE?")) await sb.from('transactions').delete().eq('id', id); }
             else { hiddenMessages.push(id); localStorage.setItem('blaze_h_m', JSON.stringify(hiddenMessages)); }
             refresh();
         }
@@ -292,4 +292,5 @@
     </script>
 </body>
 </html>
+
 
